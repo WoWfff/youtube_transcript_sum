@@ -1,0 +1,3 @@
+.venv
+.ruff_cache
+types_of_urls.txt
