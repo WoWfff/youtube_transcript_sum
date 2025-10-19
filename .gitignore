@@ -2,3 +2,5 @@
 .ruff_cache
 types_of_urls.txt
 *.txt
+!requirments.txt
+.gitignore

@@ -12,9 +12,12 @@ from google.genai.types import GenerateContentResponse
 
 import json
 
+import fastapi
+import uvicorn
+
 # To remove
 url = test_url = "https://www.youtube.com/watch?v=NTc9wE191jo"
-chdir("/home/user/Python/Own/youtube_sum_lyrics")
+chdir("/home/user/Python/Own/youtube_transcript_sum")
 
 youtube_url_types: dict[str, str] = {
     "long": r"youtube\.com/\w",
