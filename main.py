@@ -6,17 +6,24 @@ from youtube_transcript_api import formatters
 from youtube_transcript_api import _errors as youtube_transcript_api_errors
 from youtube_transcript_api._api import FetchedTranscript
 
+from google import genai
+from google.genai import types
+from google.genai.types import GenerateContentResponse
+
+import json
+
+# To remove
 url = test_url = "https://www.youtube.com/watch?v=NTc9wE191jo"
+chdir("/home/user/Python/Own/youtube_sum_lyrics")
 
 youtube_url_types: dict[str, str] = {
     "long": r"youtube\.com/\w",
     "short": r"youtu\.be/\w"
     }
 
-chdir("/home/user/Python/Own/youtube_sum_lyrics")
-
 ytt_api = YouTubeTranscriptApi()
 formatter = formatters.TextFormatter()
+Client = genai.Client()
 
 
 def get_url_type(url) -> str:
@@ -53,9 +60,37 @@ def format_transcripts(transcript) -> str:
     return formatter.format_transcript(transcript)
 
 
-def save_data_to_file(data) -> None:
-    with open("transcript.txt", "w") as file:
+def save_data_to_file(filename, data) -> None:
+    with open(filename, "w") as file:
         file.write(data)
+
+
+def get_system_instructions() -> str:
+    try:
+        with open("config.json", "r") as file:
+            json_file = json.load(file)
+        return json_file.get("system_instructions", None)
+    except Exception as err:
+        raise ValueError("Error while reading config file...") from err
+
+
+def sumarize_request(content, system_instruction) -> GenerateContentResponse:
+    try:
+        with Client as client:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                config=types.GenerateContentConfig(
+                    system_instruction=[
+                        system_instruction,
+                        "Output format: text without markdown formating"
+                    ],
+                    temperature=0.2,
+                    ),
+                contents=content,
+            )
+            return response
+    except Exception as err:
+        raise ValueError("Error while sumarizing transcript!") from err
 
 
 def main() -> None:
@@ -63,7 +98,11 @@ def main() -> None:
     video_id = fetch_video_id(url=url, url_type=url_type)
     transcript = fetch_transcripts(video_id=video_id)
     formatted_transcript = format_transcripts(transcript=transcript)
-    save_data_to_file(data=formatted_transcript)
+    sumarized_data = sumarize_request(
+        content=formatted_transcript,
+        system_instruction=get_system_instructions())
+    save_data_to_file(filename="transcript.txt", data=formatted_transcript)
+    save_data_to_file(filename="summarized_transcript.txt", data=sumarized_data.text)
 
 
 if __name__ == "__main__":
