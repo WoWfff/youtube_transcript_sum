@@ -1,22 +1,20 @@
 import re
 from os import chdir
+import asyncio
 
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api import formatters
 from youtube_transcript_api import _errors as youtube_transcript_api_errors
 from youtube_transcript_api._api import FetchedTranscript
 
-from google import genai
-from google.genai import types
+from google.genai import types, Client
 from google.genai.types import GenerateContentResponse
 
 import json
 
-import fastapi
-import uvicorn
 
 # To remove
-url = test_url = "https://www.youtube.com/watch?v=NTc9wE191jo"
+url: str = "https://www.youtube.com/watch?v=NTc9wE191jo"
 chdir("/home/user/Python/Own/youtube_transcript_sum")
 
 youtube_url_types: dict[str, str] = {
@@ -26,7 +24,6 @@ youtube_url_types: dict[str, str] = {
 
 ytt_api = YouTubeTranscriptApi()
 formatter = formatters.TextFormatter()
-Client = genai.Client()
 
 
 def get_url_type(url) -> str:
@@ -51,9 +48,11 @@ def fetch_video_id(url: str, url_type: str) -> str:
         raise ValueError("Can't extract video ID")
 
 
-def fetch_transcripts(video_id) -> FetchedTranscript:
+async def fetch_transcripts(video_id) -> FetchedTranscript:
     try:
-        return ytt_api.fetch(video_id=video_id, languages=["en"])
+        def fetch():
+            return ytt_api.fetch(video_id=video_id, languages=["en"])
+        return await asyncio.to_thread(fetch)
 
     except youtube_transcript_api_errors.TranscriptsDisabled as err:
         raise ValueError("Transcripts for this video are disabled.") from err
@@ -68,7 +67,7 @@ def save_data_to_file(filename, data) -> None:
         file.write(data)
 
 
-def get_system_instructions() -> str:
+def get_system_instructions() -> str | None:
     try:
         with open("config.json", "r") as file:
             json_file = json.load(file)
@@ -77,21 +76,24 @@ def get_system_instructions() -> str:
         raise ValueError("Error while reading config file...") from err
 
 
-def sumarize_request(content, system_instruction) -> GenerateContentResponse:
+async def sumarize_request(content, system_instruction) -> GenerateContentResponse:
     try:
-        with Client as client:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-lite",
-                config=types.GenerateContentConfig(
-                    system_instruction=[
-                        system_instruction,
-                        "Output format: text without markdown formating"
-                    ],
-                    temperature=0.2,
-                    ),
-                contents=content,
-            )
-            return response
+        def _generate():
+            with Client() as client:
+                return client.models.generate_content(
+                    model="gemini-2.5-flash-lite",
+                    config=types.GenerateContentConfig(
+                        system_instruction=[
+                            system_instruction,
+                            "Output format: text without markdown formating"
+                        ],
+                        temperature=0.2,
+                        ),
+                    contents=content,
+                )
+        response = await asyncio.to_thread(_generate)
+        return response
+
     except Exception as err:
         raise ValueError("Error while sumarizing transcript!") from err
 
@@ -99,13 +101,15 @@ def sumarize_request(content, system_instruction) -> GenerateContentResponse:
 def main() -> None:
     url_type = get_url_type(url)
     video_id = fetch_video_id(url=url, url_type=url_type)
-    transcript = fetch_transcripts(video_id=video_id)
+    transcript = asyncio.run(fetch_transcripts(video_id=video_id))
     formatted_transcript = format_transcripts(transcript=transcript)
-    sumarized_data = sumarize_request(
-        content=formatted_transcript,
-        system_instruction=get_system_instructions())
+    summarized_data = asyncio.run(
+        sumarize_request(
+            content=formatted_transcript,
+            system_instruction=get_system_instructions())
+    )
     save_data_to_file(filename="transcript.txt", data=formatted_transcript)
-    save_data_to_file(filename="summarized_transcript.txt", data=sumarized_data.text)
+    save_data_to_file(filename="summarized_transcript.txt", data=summarized_data.text)
 
 
 if __name__ == "__main__":
