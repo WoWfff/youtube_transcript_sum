@@ -2,4 +2,6 @@
 .ruff_cache
 types_of_urls.txt
 *.txt
+test.py
+__pycache__
 !requirements.txt
