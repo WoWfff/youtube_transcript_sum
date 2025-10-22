@@ -1,0 +1,201 @@
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+        
+        // Update active tab button
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update active tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+        
+        // Hide error message when switching tabs
+        hideError();
+    });
+});
+
+// Summarize form handler
+document.getElementById('summarize-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const url = document.getElementById('video-url').value.trim();
+    const submitBtn = document.getElementById('summarize-btn');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+    const resultBox = document.getElementById('summary-result');
+    const resultText = document.getElementById('summary-text');
+    
+    // Validate URL
+    if (!isValidYouTubeUrl(url)) {
+        showError('Please enter a valid YouTube URL');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'flex';
+    resultBox.style.display = 'none';
+    hideError();
+    
+    try {
+        const response = await fetch('/url/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: url })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.detail || 'Failed to generate summary');
+        }
+        
+        // Show result
+        resultText.textContent = data.message;
+        resultBox.style.display = 'block';
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+    }
+});
+
+// Translate form handler
+document.getElementById('translate-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const url = document.getElementById('translate-url').value.trim();
+    const language = document.getElementById('language').value;
+    const submitBtn = document.getElementById('translate-btn');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+    const resultBox = document.getElementById('translate-result');
+    const resultText = document.getElementById('translate-text');
+    
+    // Validate inputs
+    if (!isValidYouTubeUrl(url)) {
+        showError('Please enter a valid YouTube URL');
+        return;
+    }
+    
+    if (!language) {
+        showError('Please select a target language');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'flex';
+    resultBox.style.display = 'none';
+    hideError();
+    
+    try {
+        const response = await fetch('/url/translate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                name: url,
+                language: language
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Failed to translate transcript' }));
+            throw new Error(errorData.detail || 'Failed to translate transcript');
+        }
+        
+        const translatedText = await response.text();
+        
+        // Show result
+        resultText.textContent = translatedText;
+        resultBox.style.display = 'block';
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+    }
+});
+
+// Helper function to validate YouTube URL
+function isValidYouTubeUrl(url) {
+    const patterns = [
+        /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
+        /^https?:\/\/youtu\.be\/[\w-]+/
+    ];
+    return patterns.some(pattern => pattern.test(url));
+}
+
+// Helper function to show error
+function showError(message) {
+    const errorBox = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+    errorText.textContent = message;
+    errorBox.style.display = 'flex';
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Helper function to hide error
+function hideError() {
+    const errorBox = document.getElementById('error-message');
+    errorBox.style.display = 'none';
+}
+
+// Copy to clipboard function
+function copyToClipboard(elementId, buttonElement) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        // Show success feedback
+        const originalText = buttonElement.textContent;
+        buttonElement.textContent = '✓ Copied!';
+        buttonElement.style.background = 'var(--success)';
+        buttonElement.style.color = 'white';
+        
+        setTimeout(() => {
+            buttonElement.textContent = originalText;
+            buttonElement.style.background = '';
+            buttonElement.style.color = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showError('Failed to copy to clipboard');
+    });
+}
+
+// Auto-fill URL from previous request if available
+window.addEventListener('load', async () => {
+    try {
+        const response = await fetch('/my_url/');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.url) {
+                document.getElementById('video-url').value = data.url;
+                document.getElementById('translate-url').value = data.url;
+            }
+        }
+    } catch (error) {
+        // Silently fail - not critical
+        console.log('Could not load previous URL');
+    }
+});

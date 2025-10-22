@@ -3,8 +3,9 @@
 import logging
 from typing import Annotated
 from fastapi import APIRouter, Request, HTTPException, Depends, Response
+from pydantic import BaseModel
 
-from app.models import Url, SummaryResponse, UserUrlResponse, HealthResponse, PreferredLanguage
+from app.models import Url, SummaryResponse, UserUrlResponse, HealthResponse
 from app.dependencies import get_user_id, get_user_url_storage
 from app.config import get_system_instructions, Modes
 from app.services.transcript import TranscriptService
@@ -20,6 +21,13 @@ router = APIRouter()
 transcript_service = TranscriptService()
 summarizer_service = SummarizerService()
 translate_service = TranslateService()
+
+
+# Combined model for translate endpoint
+class TranslateRequest(BaseModel):
+    """Combined request model for translation."""
+    name: str
+    language: str
 
 
 @router.post("/url/", response_model=SummaryResponse)
@@ -70,68 +78,63 @@ async def process_url(
         raise HTTPException(status_code=500, detail="Internal server error") from err
 
 
-# @router.post("/url/translations")
-# async def translations(
-#     request: Request,
-#     url: Url
-#     ):
-#     """Process the video URL and returns all available translations."""
-#     # Determine the URL type
-#     url_type = transcript_service.get_url_type(url.name)
-#     logger.info(f"URL type detected: {url_type}")
-
-#     # Extract video ID
-#     video_id = transcript_service.fetch_video_id(url=url.name, url_type=url_type)
-#     logger.info(f"Video ID extracted: {video_id}")
-
-#     # Get list of available translating languages
-#     translating_languages = await translate_service.get_available_translations(video_id=video_id)
-#     logger.info("Translations fetched successfully")
-
-#     return {"translations": translating_languages}
-
-
 @router.post("/url/translate")
 async def translate(
     request: Request,
-    url: Url,
-    preferred_translate_language: PreferredLanguage,
+    translate_request: TranslateRequest,
     user_id: Annotated[str, Depends(get_user_id)],
     user_urls: Annotated[dict, Depends(get_user_url_storage)],
     ):
-    """Process the video URL and returns all available translations."""
+    """Process the video URL and translate the transcript."""
+    try:
+        # Saving the user's URL
+        user_urls[user_id] = translate_request.name
 
-    # Saving the user's URL
-    user_urls[user_id] = url.name
+        # Determine the URL type
+        url_type = transcript_service.get_url_type(translate_request.name)
+        logger.info(f"URL type detected: {url_type}")
 
-    # Determine the URL type
-    url_type = transcript_service.get_url_type(url.name)
-    logger.info(f"URL type detected: {url_type}")
+        # Extract video ID
+        video_id = transcript_service.fetch_video_id(url=translate_request.name, url_type=url_type)
+        logger.info(f"Video ID extracted: {video_id}")
 
-    # Extract video ID
-    video_id = transcript_service.fetch_video_id(url=url.name, url_type=url_type)
-    logger.info(f"Video ID extracted: {video_id}")
+        # We receive a transcript
+        transcript = await transcript_service.fetch_transcripts(video_id=video_id)
+        logger.info("Transcript fetched successfully")
 
-    # We receive a transcript
-    transcript = await transcript_service.fetch_transcripts(video_id=video_id)
-    logger.info("Transcript fetched successfully")
+        # Format the transcript
+        formatted_transcript = transcript_service.format_transcripts(transcript=transcript)
+        logger.info(f"Transcript formatted, length: {len(formatted_transcript)}")
 
-    # Format the transcript
-    formatted_transcript = transcript_service.format_transcripts(transcript=transcript)
-    logger.info(f"Transcript formatted, length: {len(formatted_transcript)}")
+        # Receiving system instructions for summarizing
+        system_instruction = get_system_instructions(Modes.SUMMARIZING.value)
 
-    # Receiving system instructions
-    system_instruction = get_system_instructions(Modes.SUMMARIZING.value)
-
-    # Translating transcript
-    translated_transcript = await translate_service.translate_text(
-        content=formatted_transcript,
-        system_instruction=system_instruction,
-        preferred_translate_language=preferred_translate_language.language
+        # Summarize
+        summary = await summarizer_service.summarize_request(
+            content=formatted_transcript, system_instruction=system_instruction
         )
-    logger.info("Transcript translated, successfully.")
+        logger.info("Summary generated successfully")
 
-    return Response(content=translated_transcript, media_type="text/plain")
+        # Receiving system instructions for translating
+        system_instruction = get_system_instructions(Modes.TRANSLATING.value)
+
+        # Translating transcript
+        translated_transcript = await translate_service.translate_text(
+            content=summary,
+            system_instruction=system_instruction,
+            preferred_translate_language=translate_request.language
+        )
+        logger.info("Transcript translated successfully.")
+
+        return Response(content=translated_transcript, media_type="text/plain")
+
+    except ValueError as err:
+        logger.error(f"Validation error: {str(err)}")
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+    except Exception as err:
+        logger.error(f"Unexpected error: {str(err)}")
+        raise HTTPException(status_code=500, detail="Internal server error") from err
 
 
 @router.get("/my_url/", response_model=UserUrlResponse)
