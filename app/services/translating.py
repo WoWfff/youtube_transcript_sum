@@ -1,35 +1,41 @@
 """Service for getting list of available translating languages and
 translating processed YouTube transcripts."""
 
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api import formatters
-from youtube_transcript_api._errors import IpBlocked
+import asyncio
+from google.genai import types, Client
 
 
 class TranslateService:
 
-    def __init__(self):
-        self.ytt_api = YouTubeTranscriptApi()
-        self.formatter = formatters.TextFormatter()
-
-    async def get_available_translations(self, video_id: str) -> list:
+    @staticmethod
+    async def translate_text(
+    content: str,
+    system_instruction: str,
+    preferred_translate_language: str | None = None) -> str:
+        """Translating trascript with Gemini."""
         try:
-            transcript_list = self.ytt_api.list(video_id=video_id)
-            languages = [transcript.language_code for transcript in transcript_list]
-            return languages
+            def _generate():
+                with Client() as client:
+                    return client.models.generate_content(
+                        model="gemini-2.5-flash-lite",
+                        config=types.GenerateContentConfig(
+                            system_instruction=[
+                                system_instruction,
+                                "Output format: text without markdown formatting",
+                                (f"preferred language: {preferred_translate_language}"
+                                if preferred_translate_language else None),
+                            ],
+                            temperature=0.2,
+                        ),
+                        contents=content,
+                    )
+
+            response = await asyncio.to_thread(_generate)
+
+            if not response or not response.text:
+                raise ValueError("Empty response from Gemini API")
+
+            return response.text
+
         except Exception as err:
-            raise ValueError("Error while getting translations") from err
-
-    async def translate_transcript(self, video_id: str, preferred_language: str):
-        try:
-            transcript_list = self.ytt_api.list(video_id=video_id)
-            for transcript in transcript_list:
-                if transcript.language_code == preferred_language:
-                    return transcript.fetch()
-
-        except IpBlocked as err:
-            raise ValueError("""Could not retrieve a transcript for the video
-            https://www.youtube.com/watch?v=o4TdHrMi6do!""") from err
-
-        except Exception as err:
-            raise ValueError("Error while translating transcript.") from err
+            raise ValueError(f"Error while summarizing transcript: {str(err)}") from err

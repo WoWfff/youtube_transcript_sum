@@ -67,4 +67,4 @@ class TranscriptService:
             # return self.formatter.format_transcript(transcript)
 
         except Exception as err:
-            raise ValueError("Error while formatting t`ranscript") from err
+            raise ValueError("Error while formatting transcript") from err
