@@ -2,3 +2,9 @@ youtube_transcript_api
 google.genai
 fastapi[standard]
 uvicorn
+pydantic
+pydantic-settings
+sqlalchemy
+asyncpg
+psycopg
+psycopg-binary

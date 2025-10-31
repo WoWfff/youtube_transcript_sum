@@ -7,7 +7,7 @@ from youtube_transcript_api import formatters
 from youtube_transcript_api import _errors as youtube_transcript_api_errors
 from youtube_transcript_api._api import FetchedTranscript
 
-from app.config import YOUTUBE_URL_TYPES
+from app.app_config import YOUTUBE_URL_TYPES
 
 
 class TranscriptService:

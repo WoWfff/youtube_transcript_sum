@@ -5,3 +5,4 @@ types_of_urls.txt
 test.py
 __pycache__
 !requirements.txt
+.env

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from app.models import Url, SummaryResponse, UserUrlResponse, HealthResponse
 from app.dependencies import get_user_id, get_user_url_storage
-from app.config import get_system_instructions, Modes
+from app.app_config import get_system_instructions, Modes
 from app.services.transcript import TranscriptService
 from app.services.summarizer import SummarizerService
 from app.services.translating import TranslateService
