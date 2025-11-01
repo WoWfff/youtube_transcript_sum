@@ -4,6 +4,7 @@ import logging
 from typing import Annotated
 from fastapi import APIRouter, Request, HTTPException, Depends, Response
 from pydantic import BaseModel
+from youtube_transcript_api._errors import CouldNotRetrieveTranscript
 
 from app.models import Url, SummaryResponse, UserUrlResponse, HealthResponse
 from app.dependencies import get_user_id, get_user_url_storage
@@ -11,10 +12,11 @@ from app.app_config import get_system_instructions, Modes
 from app.services.transcript import TranscriptService
 from app.services.summarizer import SummarizerService
 from app.services.translating import TranslateService
+from app.db_models import UserBase, UrlBase
+from app.database.methods import engine, Select, Insert
 
 # Logger settings
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 # Initialize services
@@ -32,15 +34,16 @@ class TranslateRequest(BaseModel):
 
 @router.post("/url/", response_model=SummaryResponse)
 async def process_url(
-    request: Request,
     url: Url,
     user_id: Annotated[str, Depends(get_user_id)],
-    user_urls: Annotated[dict, Depends(get_user_url_storage)],
 ):
     """Process the video URL and return the summarization."""
     try:
         # Saving the user's URL
-        user_urls[user_id] = url.name
+        db_user = Select(model=UserBase, engine=engine).by_filter(cookies=user_id)
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        Insert(model=UrlBase, engine=engine).one(owner_id=db_user.id, url=url.name)
 
         # Determine the URL type
         url_type = transcript_service.get_url_type(url.name)
@@ -73,6 +76,12 @@ async def process_url(
         logger.error(f"Validation error: {str(err)}")
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    except CouldNotRetrieveTranscript as err:
+        logger.error(f"Could not retrieve a transcript for the video: {str(err)}")
+        raise HTTPException(
+            status_code=400,
+            detail="Could not retrieve a transcript for the video.") from err
+
     except Exception as err:
         logger.error(f"Unexpected error: {str(err)}")
         raise HTTPException(status_code=500, detail="Internal server error") from err
@@ -80,7 +89,6 @@ async def process_url(
 
 @router.post("/url/translate")
 async def translate(
-    request: Request,
     translate_request: TranslateRequest,
     user_id: Annotated[str, Depends(get_user_id)],
     user_urls: Annotated[dict, Depends(get_user_url_storage)],

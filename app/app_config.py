@@ -5,7 +5,7 @@ from pathlib import Path
 from functools import lru_cache
 from enum import Enum
 
-CONFIG_PATH = Path(__file__).parent.parent / "config.json"
+CONFIG_PATH = Path(__file__).parent / "config.json"
 
 YOUTUBE_URL_TYPES: dict[str, str] = {"long": r"youtube\.com/\w", "short": r"youtu\.be/\w"}
 

@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
 class UserBase(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = MappedColumn(primary_key=True)
+    id: Mapped[int] = MappedColumn(primary_key=True, autoincrement=True)
     cookies: Mapped[str] = MappedColumn(String(1024), nullable=False)
     created_at: Mapped[datetime] = MappedColumn(
         DateTime(timezone=True), server_default=func.now()
@@ -26,7 +26,7 @@ class UserBase(Base):
 class UrlBase(Base):
     __tablename__ = "urls"
 
-    id: Mapped[int] = MappedColumn(primary_key=True)
+    id: Mapped[int] = MappedColumn(primary_key=True, autoincrement=True)
     url: Mapped[str] = MappedColumn(String(2048), nullable=True)
     owner_id: Mapped[int] = MappedColumn(ForeignKey("users.id"), nullable=False)
 
