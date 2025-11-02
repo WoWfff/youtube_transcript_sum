@@ -56,12 +56,6 @@ class TranscriptService:
 
             return await asyncio.to_thread(fetch)
 
-        except youtube_transcript_api_errors.CouldNotRetrieveTranscript:
-            transcript_list = self.ytt_api.list(video_id=video_id)
-            for transcript in transcript_list:
-                data = transcript.translate("en").fetch()
-            return data
-
         except youtube_transcript_api_errors.TranscriptsDisabled as err:
             raise ValueError("Transcripts for this video are disabled") from err
         except Exception as err:

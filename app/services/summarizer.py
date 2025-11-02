@@ -3,6 +3,12 @@
 import asyncio
 from google.genai import types, Client
 
+from dotenv import load_dotenv
+from os import getenv
+
+load_dotenv()
+api_key = getenv("GEMINI_API_KEY")
+
 
 class SummarizerService:
     """Service for summarizing text using Gemini API."""
@@ -12,7 +18,7 @@ class SummarizerService:
         """Submitting a summarization request to Gemini."""
         try:
             def _generate():
-                with Client() as client:
+                with Client(api_key=api_key) as client:
                     return client.models.generate_content(
                         model="gemini-2.5-flash-lite",
                         config=types.GenerateContentConfig(
