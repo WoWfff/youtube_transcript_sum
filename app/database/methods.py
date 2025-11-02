@@ -2,10 +2,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, select, insert, update, delete
 
 from app.db_config import settings
-from app.db_models import UserBase
 from app.database.init_db import init_db
 
-from typing import Any
+from typing import Any, overload, Literal
 
 
 db_url = settings.DATABASE_URL_psycopg(table_name="youtube_transcript")
@@ -54,7 +53,13 @@ class Select(BaseCRUD):
             stmt = select(self.model).where(self.model.id == item_id)
             return session.scalar(stmt)
 
-    def by_filter(self, **filters) -> Any | None:
+    @overload
+    def by_filter(self, many: Literal[True], **filters) -> list[Any]: ...
+
+    @overload
+    def by_filter(self, many: Literal[False] = False, **filters) -> Any | None: ...
+
+    def by_filter(self, many: bool = False, **filters) -> Any | list[Any] | None:
         """
         Get one record by filters.
 
@@ -74,7 +79,10 @@ class Select(BaseCRUD):
                 column = getattr(self.model, field)
                 stmt = stmt.where(column == value)
 
-            return session.scalar(stmt)
+            if many:
+                return session.scalars(stmt).all()
+            else:
+                return session.scalar(stmt)
 
 
 class Insert(BaseCRUD):
@@ -136,11 +144,3 @@ class Delete(BaseCRUD):
             stmt = delete(self.model).where(self.model.id == item_id)
             session.execute(stmt)
             session.commit()
-
-
-# if __name__ == "__main__":
-    # user = Select(model=UserBase, engine=engine).by_filter(
-    # cookies="c1eb8e93-41d7-4920-a42e-a19d96e8a8ab")
-    # print(user)
-    # for i in range(4):
-    #     Delete(model=UserBase, engine=engine).by_id(i+1)

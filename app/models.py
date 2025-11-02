@@ -16,7 +16,7 @@ class SummaryResponse(BaseModel):
 class UserUrlResponse(BaseModel):
     """User URL response model."""
     user_id: str
-    url: str | None
+    url: str | list[str] | None
 
 
 class HealthResponse(BaseModel):

@@ -148,12 +148,38 @@ async def translate(
 @router.get("/my_url/", response_model=UserUrlResponse)
 async def my_url(
     request: Request,
-    user_id: Annotated[str, Depends(get_user_id)],
-    user_urls: Annotated[dict, Depends(get_user_url_storage)],
+    cookies_user_id: Annotated[str, Depends(get_user_id)]
+    ):
+    """Returns the user's last saved URL."""
+    db_user = Select(model=UserBase, engine=engine).by_filter(cookies=cookies_user_id)
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    url = Select(model=UrlBase, engine=engine).by_filter(owner_id=db_user.id)
+
+    if url:
+        return {"user_id": cookies_user_id, "url": url.url}
+    else:
+        return None
+
+
+@router.get("/my_urls/", response_model=UserUrlResponse)
+async def my_urls(
+    request: Request,
+    cookies_user_id: Annotated[str, Depends(get_user_id)],
 ):
     """Returns the user's saved URL."""
-    url = user_urls.get(user_id)
-    return {"user_id": user_id, "url": url or None}
+    db_user = Select(model=UserBase, engine=engine).by_filter(cookies=cookies_user_id)
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    urls = Select(model=UrlBase, engine=engine).by_filter(many=True, owner_id=db_user.id)
+
+    return {
+        "user_id": cookies_user_id,
+        "url": [u.url for u in urls] if urls else [],
+    }
 
 
 @router.get("/health", response_model=HealthResponse)

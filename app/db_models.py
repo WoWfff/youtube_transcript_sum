@@ -17,6 +17,11 @@ class UserBase(Base):
     created_at: Mapped[datetime] = MappedColumn(
         DateTime(timezone=True), server_default=func.now()
     )
+    updated_at: Mapped[DeclarativeBase] = MappedColumn(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
+    )
 
     urls: Mapped[list["UrlBase"]] = relationship(  # noqa: UP037
         back_populates="owner"
