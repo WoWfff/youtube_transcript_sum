@@ -17,7 +17,7 @@ class UserBase(Base):
     created_at: Mapped[datetime] = MappedColumn(
         DateTime(timezone=True), server_default=func.now()
     )
-    updated_at: Mapped[DeclarativeBase] = MappedColumn(
+    updated_at: Mapped[datetime] = MappedColumn(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now()
@@ -26,6 +26,7 @@ class UserBase(Base):
     urls: Mapped[list["UrlBase"]] = relationship(  # noqa: UP037
         back_populates="owner"
     )
+    summarizations: Mapped[list["SumBase"]] = relationship(back_populates="user")  # noqa: UP037
 
 
 class UrlBase(Base):
@@ -37,4 +38,28 @@ class UrlBase(Base):
 
     owner: Mapped["UserBase"] = relationship(  # noqa: UP037
         back_populates="urls"
+    )
+
+    summarization: Mapped["SumBase"] = relationship(  # noqa: UP037
+        back_populates="url",
+        uselist=False
+    )
+
+
+class SumBase(Base):
+    __tablename__ = "summarization"
+
+    id: Mapped[int] = MappedColumn(primary_key=True, autoincrement=True)
+    user_owner_id: Mapped[int] = MappedColumn(ForeignKey("users.id"), nullable=False)
+    url_owner_id: Mapped[int] = MappedColumn(ForeignKey("urls.id"), nullable=False)
+    url_shortcode: Mapped[str] = MappedColumn(String(2048), nullable=False)
+    path_to_sum_file: Mapped[str] = MappedColumn(String(2048), nullable=False)
+    created_at: Mapped[datetime] = MappedColumn(DateTime, default=datetime.utcnow)
+
+    url: Mapped["UrlBase"] = relationship(  # noqa: UP037
+        back_populates="summarization"
+    )
+
+    user: Mapped["UserBase"] = relationship(  # noqa: UP037
+        back_populates="summarizations"
     )

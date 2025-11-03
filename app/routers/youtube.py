@@ -6,14 +6,16 @@ from fastapi import APIRouter, Request, HTTPException, Depends, Response
 from pydantic import BaseModel
 from youtube_transcript_api._errors import CouldNotRetrieveTranscript
 
-from app.models import Url, SummaryResponse, UserUrlResponse, HealthResponse
+from app.models.pydantic_models import Url, SummaryResponse, UserUrlResponse, HealthResponse
 from app.dependencies import get_user_id, get_user_url_storage
-from app.app_config import get_system_instructions, Modes
+from app.configs.app_config import get_system_instructions, Modes
 from app.services.transcript import TranscriptService
 from app.services.summarizer import SummarizerService
 from app.services.translating import TranslateService
-from app.db_models import UserBase, UrlBase
+from app.models.db_models import UserBase, UrlBase, SumBase
 from app.database.methods import engine, Select, Insert
+from app.services.sum_methods import File
+
 
 # Logger settings
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ async def process_url(
         db_user = Select(model=UserBase, engine=engine).by_filter(cookies=user_id)
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
-        Insert(model=UrlBase, engine=engine).one(owner_id=db_user.id, url=url.name)
+        url_id = Insert(model=UrlBase, engine=engine).one(owner_id=db_user.id, url=url.name)
 
         # Determine the URL type
         url_type = transcript_service.get_url_type(url.name)
@@ -69,6 +71,19 @@ async def process_url(
             content=formatted_transcript, system_instruction=system_instruction
         )
         logger.info("Summary generated successfully")
+
+        # Writing summarization to file
+        path_to_sum_file = File(file_name=video_id, text=summary).save()
+        logger.info("Summary writed into file successfully")
+
+        # Adding summarization into database
+        Insert(model=SumBase, engine=engine).one(
+            user_owner_id=db_user.id,
+            url_owner_id=url_id.id,
+            url_shortcode=video_id,
+            path_to_sum_file=str(path_to_sum_file)
+            )
+        logger.info("Summary writed into db successfully")
 
         return {"message": summary}
 

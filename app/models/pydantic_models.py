@@ -27,3 +27,7 @@ class HealthResponse(BaseModel):
 class PreferredLanguage(BaseModel):
     """Preferred user translating language response model."""
     language: str
+
+
+class FileResponse(BaseModel):
+    text: str

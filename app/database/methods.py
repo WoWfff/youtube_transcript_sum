@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, select, insert, update, delete
 
-from app.db_config import settings
+from app.configs.db_config import settings
 from app.database.init_db import init_db
 
 from typing import Any, overload, Literal
@@ -90,7 +90,7 @@ class Insert(BaseCRUD):
         """
         Insert data in table with specific item_id.
 
-        **kwargs: item_id in table
+        **kwargs: item_id and value in table
         model: table_name
         engine: object create_engine
 
@@ -98,10 +98,11 @@ class Insert(BaseCRUD):
             Insert(model=UserBase, engine=engine).one(id=1, name_of_column="data")
         """
         with self._session() as session:
-            stmt = insert(self.model).values(**kwargs).returning(self.model)
-            result = session.scalar(stmt)
+            instance = self.model(**kwargs)
+            session.add(instance)
             session.commit()
-            return result
+            session.refresh(instance)
+            return instance
 
 
 class Update(BaseCRUD):
