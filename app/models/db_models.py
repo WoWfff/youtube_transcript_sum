@@ -1,6 +1,6 @@
 """Database models."""
 
-from sqlalchemy import String, ForeignKey, func, DateTime
+from sqlalchemy import String, Boolean, ForeignKey, func, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedColumn, relationship
 from datetime import datetime
 
@@ -33,7 +33,9 @@ class UrlBase(Base):
     __tablename__ = "urls"
 
     id: Mapped[int] = MappedColumn(primary_key=True, autoincrement=True)
-    url: Mapped[str] = MappedColumn(String(2048), nullable=True)
+    url: Mapped[str] = MappedColumn(String(2048), nullable=False)
+    url_shortcode: Mapped[str] = MappedColumn(String(100), nullable=True)
+    transcript_accessibility: Mapped[bool] = MappedColumn(Boolean, nullable=True)
     owner_id: Mapped[int] = MappedColumn(ForeignKey("users.id"), nullable=False)
 
     owner: Mapped["UserBase"] = relationship(  # noqa: UP037
@@ -54,6 +56,7 @@ class SumBase(Base):
     url_owner_id: Mapped[int] = MappedColumn(ForeignKey("urls.id"), nullable=False)
     url_shortcode: Mapped[str] = MappedColumn(String(2048), nullable=False)
     path_to_sum_file: Mapped[str] = MappedColumn(String(2048), nullable=False)
+    language_code: Mapped[str] = MappedColumn(String(100), nullable=True)
     created_at: Mapped[datetime] = MappedColumn(DateTime, default=datetime.utcnow)
 
     url: Mapped["UrlBase"] = relationship(  # noqa: UP037

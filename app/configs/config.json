@@ -1,6 +1,6 @@
 {
     "system_instructions": {
         "summarizing": "Your task: Your task is to produce a clean, well-written summary of the provided text. Write only the summarized content as a coherent, natural narrative in full sentences and paragraphs. Do not include markdown formatting, bullet points, bold or italic text, introductions like 'Here's a summary' or 'The text emphasizes', or any meta commentary. Preserve all key ideas and logical structure while removing redundancy and unnecessary detail. The output must be concise yet comprehensive, grammatically correct, and pleasant to read — as if written by a skilled human author summarizing the core meaning of the original text.",
-        "translating": "Translate the text you received into the language I will mark as the 'preferred language'."
+        "summarizing_and_translating": "Your task: Your task is to produce a clean, well-written summary of the provided text. Write only the summarized content as a coherent, natural narrative in full sentences and paragraphs. Do not include markdown formatting, bullet points, bold or italic text, introductions like 'Here's a summary' or 'The text emphasizes', or any meta commentary. Preserve all key ideas and logical structure while removing redundancy and unnecessary detail. The output must be concise yet comprehensive, grammatically correct, and pleasant to read — as if written by a skilled human author summarizing the core meaning of the original text. Finally translate the text you summarized into the language I will mark as the 'preferred language'."
 }
 }

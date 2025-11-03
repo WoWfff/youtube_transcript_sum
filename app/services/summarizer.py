@@ -40,3 +40,36 @@ class SummarizerService:
 
         except Exception as err:
             raise ValueError(f"Error while summarizing transcript: {str(err)}") from err
+
+    @staticmethod
+    async def summarize_and_translate_request(
+    content: str,
+    system_instruction: str,
+    preferred_translate_language: str | None = None) -> str:
+        """Translating trascript with Gemini."""
+        try:
+            def _generate():
+                with Client() as client:
+                    return client.models.generate_content(
+                        model="gemini-2.5-flash-lite",
+                        config=types.GenerateContentConfig(
+                            system_instruction=[
+                                system_instruction,
+                                "Output format: text without markdown formatting",
+                                (f"preferred language: {preferred_translate_language}"
+                                if preferred_translate_language else None),
+                            ],
+                            temperature=0.2,
+                        ),
+                        contents=content,
+                    )
+
+            response = await asyncio.to_thread(_generate)
+
+            if not response or not response.text:
+                raise ValueError("Empty response from Gemini API")
+
+            return response.text
+
+        except Exception as err:
+            raise ValueError(f"Error while summarizing transcript: {str(err)}") from err

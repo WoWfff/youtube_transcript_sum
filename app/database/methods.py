@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, select, insert, update, delete
+from sqlalchemy import create_engine, select, update, delete
 
 from app.configs.db_config import settings
 from app.database.init_db import init_db

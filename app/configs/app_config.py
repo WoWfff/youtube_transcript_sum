@@ -11,8 +11,8 @@ YOUTUBE_URL_TYPES: dict[str, str] = {"long": r"youtube\.com/\w", "short": r"yout
 
 
 class Modes(Enum):
-    TRANSLATING = "translating"
     SUMMARIZING = "summarizing"
+    SUMMARIZING_AND_TRANSLATING = "summarizing_and_translating"
 
 
 @lru_cache

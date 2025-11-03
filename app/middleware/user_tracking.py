@@ -21,6 +21,9 @@ async def add_user_id(request: Request, call_next):
         user_id = str(uuid.uuid4())
         request.state.user_id = user_id
 
+    if not Select(model=UserBase, engine=engine).by_filter(cookies=user_id):
+        Insert(model=UserBase, engine=engine).one(cookies=user_id)
+
     response = await call_next(request)
 
     if not request.cookies.get("user_id"):
@@ -30,8 +33,5 @@ async def add_user_id(request: Request, call_next):
             httponly=True,
             max_age=31536000,  # 1 year
         )
-
-    if not Select(model=UserBase, engine=engine).by_filter(cookies=user_id):
-        Insert(model=UserBase, engine=engine).one(cookies=user_id)
 
     return response

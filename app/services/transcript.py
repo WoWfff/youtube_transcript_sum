@@ -40,7 +40,7 @@ class TranscriptService:
         else:
             raise ValueError("Can't extract video ID from URL")
 
-    async def fetch_transcripts(self, video_id: str) -> FetchedTranscript:
+    async def fetch_transcripts(self, video_id: str) -> tuple[FetchedTranscript, str]:
         """Obtaining a video transcript."""
         try:
 
@@ -48,11 +48,15 @@ class TranscriptService:
                 list_of_transcripts = self.ytt_api.list(video_id=video_id)
                 if list_of_transcripts._manually_created_transcripts:
                     for transcript in list_of_transcripts._manually_created_transcripts:
-                        return self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)])
+                        return (self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)]),
+                                str(transcript)
+                                )
 
                 elif list_of_transcripts._generated_transcripts:
                     for transcript in list_of_transcripts._generated_transcripts:
-                        return self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)])
+                        return (self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)]),
+                                str(transcript)
+                                )
 
             return await asyncio.to_thread(fetch)
 
@@ -65,7 +69,6 @@ class TranscriptService:
         """Formatting the transcript into text."""
         try:
             return " ".join(line.text for line in transcript)
-            # return self.formatter.format_transcript(transcript)
 
         except Exception as err:
             raise ValueError("Error while formatting transcript") from err

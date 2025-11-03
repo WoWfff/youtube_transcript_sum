@@ -31,3 +31,9 @@ class PreferredLanguage(BaseModel):
 
 class FileResponse(BaseModel):
     text: str
+
+
+class TranslateRequest(BaseModel):
+    """Combined request model for translation."""
+    name: str
+    language: str
