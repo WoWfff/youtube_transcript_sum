@@ -3,6 +3,7 @@
 import logging
 from typing import Annotated
 from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi.responses import PlainTextResponse
 from youtube_transcript_api._errors import CouldNotRetrieveTranscript
 
 from app.models.pydantic_models import Url, SummaryResponse, UserUrlResponse, HealthResponse, TranslateRequest  # noqa: E501
@@ -24,7 +25,7 @@ transcript_service = TranscriptService()
 summarizer_service = SummarizerService()
 
 
-@router.post("/url/", response_model=SummaryResponse)
+@router.post("/url/")
 async def process_url(
     url: Url,
     user_id: Annotated[str, Depends(get_user_id)],
@@ -82,7 +83,7 @@ async def process_url(
             )
         logger.info("Summary writed into db successfully")
 
-        return {"message": summary}
+        return PlainTextResponse(summary)
 
     except ValueError as err:
         if str(err) == "Transcripts for this video are disabled":
@@ -104,9 +105,8 @@ async def process_url(
 
 
 @router.post("/url/translate")
-async def translate(
+async def summarize_and_translate(
     user_id: Annotated[str, Depends(get_user_id)],
-    url: Url,
     translate_request: TranslateRequest,
     ):
     """Process the video URL and translate the transcript."""
@@ -115,14 +115,14 @@ async def translate(
         db_user = Select(model=UserBase, engine=engine).by_filter(cookies=user_id)
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
-        url_instance = Insert(model=UrlBase, engine=engine).one(owner_id=db_user.id, url=url.name)
+        url_instance = Insert(model=UrlBase, engine=engine).one(owner_id=db_user.id, url=translate_request.name)
 
         # Determine the URL type
-        url_type = transcript_service.get_url_type(url.name)
+        url_type = transcript_service.get_url_type(translate_request.name)
         logger.info(f"URL type detected: {url_type}")
 
         # Extracting video ID
-        video_id = transcript_service.fetch_video_id(url=url.name, url_type=url_type)
+        video_id = transcript_service.fetch_video_id(url=translate_request.name, url_type=url_type)
         logger.info(f"Video ID extracted: {video_id}")
 
         # Updating video_shortcode in database
@@ -164,7 +164,7 @@ async def translate(
             )
         logger.info("Summary writed into db successfully")
 
-        return {"message": summary}
+        return PlainTextResponse(summary)
 
     except ValueError as err:
         if str(err) == "Transcripts for this video are disabled":

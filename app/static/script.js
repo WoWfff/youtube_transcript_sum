@@ -51,14 +51,24 @@ document.getElementById('summarize-form').addEventListener('submit', async (e) =
             body: JSON.stringify({ name: url })
         });
         
-        const data = await response.json();
-        
+        const contentType = response.headers.get('content-type') || '';
         if (!response.ok) {
-            throw new Error(data.detail || 'Failed to generate summary');
+            if (contentType.includes('application/json')) {
+                const errJson = await response.json().catch(() => ({}));
+                const detail = errJson && errJson.detail;
+                const message = Array.isArray(detail)
+                    ? detail.map(d => (d && d.msg) ? d.msg : JSON.stringify(d)).join('; ')
+                    : (typeof detail === 'string' ? detail : 'Failed to generate summary');
+                throw new Error(message);
+            }
+            const errText = await response.text().catch(() => 'Failed to generate summary');
+            throw new Error(errText || 'Failed to generate summary');
         }
-        
+
+        const text = await response.text();
+
         // Show result
-        resultText.textContent = data.message;
+        resultText.textContent = text;
         resultBox.style.display = 'block';
         resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         
@@ -114,13 +124,22 @@ document.getElementById('translate-form').addEventListener('submit', async (e) =
             })
         });
         
+        const contentType = response.headers.get('content-type') || '';
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Failed to translate transcript' }));
-            throw new Error(errorData.detail || 'Failed to translate transcript');
+            if (contentType.includes('application/json')) {
+                const errJson = await response.json().catch(() => ({}));
+                const detail = errJson && errJson.detail;
+                const message = Array.isArray(detail)
+                    ? detail.map(d => (d && d.msg) ? d.msg : JSON.stringify(d)).join('; ')
+                    : (typeof detail === 'string' ? detail : 'Failed to translate transcript');
+                throw new Error(message);
+            }
+            const errText = await response.text().catch(() => 'Failed to translate transcript');
+            throw new Error(errText || 'Failed to translate transcript');
         }
-        
+
         const translatedText = await response.text();
-        
+
         // Show result
         resultText.textContent = translatedText;
         resultBox.style.display = 'block';
