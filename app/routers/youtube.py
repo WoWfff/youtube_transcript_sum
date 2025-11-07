@@ -2,19 +2,19 @@
 
 import logging
 from typing import Annotated
-from fastapi import APIRouter, Request, HTTPException, Depends
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from youtube_transcript_api._errors import CouldNotRetrieveTranscript
 
-from app.models.pydantic_models import Url, UserUrlResponse, HealthResponse, TranslateRequest  # noqa: E501
+from app.configs.app_config import Modes, get_language_name, get_system_instructions
 from app.dependencies import get_user_id
-from app.configs.app_config import get_system_instructions, get_language_name, Modes
-from app.services.transcript import TranscriptService
-from app.services.summarizer import SummarizerService
-from app.models.db_models import UserBase, UrlBase, SumBase
-from app.services.database.methods import engine, Select, Insert
+from app.models.db_models import SumBase, UrlBase, UserBase
+from app.models.pydantic_models import HealthResponse, SumAndTranslateRequest, SumRequest, UserUrlResponse
+from app.services.database.methods import Insert, Select, engine
 from app.services.sum_file_methods import File
-
+from app.services.summarizer import SummarizerService
+from app.services.transcript import TranscriptService
 
 # Logger settings
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ summarizer_service = SummarizerService()
 
 @router.post("/url/")
 async def process_url(
-    url: Url,
+    sum_request: SumRequest,
     user_id: Annotated[str, Depends(get_user_id)],
 ):
     """Process the video URL and return the summarization."""
@@ -38,15 +38,19 @@ async def process_url(
             raise HTTPException(status_code=404, detail="User not found")
 
         # Determine the URL type
-        url_type = transcript_service.get_url_type(url.name)
+        url_type = transcript_service.get_url_type(sum_request.name)
         logger.info(f"URL type detected: {url_type}")
 
         # Extracting video ID
-        video_id = transcript_service.fetch_video_id(url=url.name, url_type=url_type)
+        video_id = transcript_service.fetch_video_id(url=sum_request.name, url_type=url_type)
         logger.info(f"Video ID extracted: {video_id}")
 
         # Checking for existed transcript
-        url_instance = Select(model=UrlBase, engine=engine).by_filter(url_shortcode=video_id)
+        url_instance = None
+        logger.info(f"Pure state is: {sum_request.pure_state}, {sum_request.pure_state.state}")
+        if not sum_request.pure_state.state:
+            url_instance = Select(model=UrlBase, engine=engine).by_filter(url_shortcode=video_id)
+
         if url_instance and url_instance.transcript_accessibility:
             logger.info("Existed transcript found.")
             sum_instance = Select(model=SumBase, engine=engine).by_filter(
@@ -84,11 +88,11 @@ async def process_url(
         # Writing summarization to file
         path_to_sum_file = File(file_name=video_id, text=summary).save()
         logger.info("Summary writed into file successfully")
-        
+
         # Writing data into UrlBase table
         url_instance = Insert(model=UrlBase, engine=engine).one(
             owner_id=db_user.id,
-            url=url.name,
+            url=sum_request.name,
             url_shortcode=video_id,
             transcript_accessibility=True)
 
@@ -110,27 +114,27 @@ async def process_url(
             if db_user is not None:
                 url_instance = Insert(model=UrlBase, engine=engine).one(
                     owner_id=db_user.id,
-                    url=url.name,
+                    url=sum_request.name,
                     url_shortcode=video_id,
                     transcript_accessibility=False)
-        logger.error(f"Validation error: {str(err)}")
+        logger.error(f"Validation error: {err}")
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     except CouldNotRetrieveTranscript as err:
-        logger.error(f"Could not retrieve a transcript for the video: {str(err)}")
+        logger.error(f"Could not retrieve a transcript for the video: {err}")
         raise HTTPException(
             status_code=400,
             detail="Could not retrieve a transcript for the video.") from err
 
     except Exception as err:
-        logger.error(f"Unexpected error: {str(err)}")
+        logger.error(f"Unexpected error: {err}")
         raise HTTPException(status_code=500, detail="Internal server error") from err
 
 
 @router.post("/url/translate")
 async def summarize_and_translate(
     user_id: Annotated[str, Depends(get_user_id)],
-    translate_request: TranslateRequest,
+    sum_and_translate_request: SumAndTranslateRequest,
     ):
     """Process the video URL and translate the transcript."""
     try:
@@ -140,21 +144,24 @@ async def summarize_and_translate(
             raise HTTPException(status_code=404, detail="User not found")
 
         # Determine the URL type
-        url_type = transcript_service.get_url_type(translate_request.name)
+        url_type = transcript_service.get_url_type(sum_and_translate_request.name)
         logger.info(f"URL type detected: {url_type}")
 
         # Extracting video ID
-        video_id = transcript_service.fetch_video_id(url=translate_request.name, url_type=url_type)
+        video_id = transcript_service.fetch_video_id(url=sum_and_translate_request.name, url_type=url_type)
         logger.info(f"Video ID extracted: {video_id}")
 
         # Checking for existed transcript
-        url_instance = Select(model=UrlBase, engine=engine).by_filter(url_shortcode=video_id)
+        url_instance = None
+        if not sum_and_translate_request.pure_state.state:
+            url_instance = Select(model=UrlBase, engine=engine).by_filter(url_shortcode=video_id)
+
         if url_instance and url_instance.transcript_accessibility:
             logger.info("Existed transcript found.")
-            logger.info(f"Preffered language is: {translate_request.language}")
+            logger.info(f"Preffered language is: {sum_and_translate_request.language}")
             sum_instance = Select(model=SumBase, engine=engine).by_filter(
                 url_shortcode=video_id,
-                language_code=translate_request.language
+                language_code=sum_and_translate_request.language
             )
             if sum_instance:
                 path_to_file = sum_instance.path_to_sum_file
@@ -180,10 +187,10 @@ async def summarize_and_translate(
         system_instruction = get_system_instructions(Modes.SUMMARIZING.value)
 
         # Converting language code to language
-        full_language_name = get_language_name(language_code=translate_request.language)
+        full_language_name = get_language_name(language_code=sum_and_translate_request.language)
 
         # Translating transcript
-        logger.info(f"preferred_translate_language is {translate_request.language}")
+        logger.info(f"preferred_translate_language is {sum_and_translate_request.language}")
         summary = await summarizer_service.summarize_and_translate_request(
             content=formatted_transcript,
             system_instruction=system_instruction,
@@ -192,14 +199,14 @@ async def summarize_and_translate(
         logger.info("Transcript summarized and translated successfully.")
 
         # Writing summarization to file
-        file_name = f"{video_id}_{translate_request.language}"
+        file_name = f"{video_id}_{sum_and_translate_request.language}"
         path_to_sum_file = File(file_name=file_name, text=summary).save()
         logger.info("Summary writed into file successfully")
 
         # Writing data into UrlBase table
         url_instance = Insert(model=UrlBase, engine=engine).one(
             owner_id=db_user.id,
-            url=translate_request.name,
+            url=sum_and_translate_request.name,
             url_shortcode=video_id,
             transcript_accessibility=True)
 
@@ -209,7 +216,7 @@ async def summarize_and_translate(
             url_owner_id=url_instance.id,
             url_shortcode=video_id,
             path_to_sum_file=str(path_to_sum_file),
-            language_code=translate_request.language
+            language_code=sum_and_translate_request.language
             )
         logger.info("Summary writed into db successfully")
 
@@ -221,20 +228,20 @@ async def summarize_and_translate(
             if db_user is not None:
                 Insert(model=UrlBase, engine=engine).one(
                     owner_id=db_user.id,
-                    url=translate_request.name,
+                    url=sum_and_translate_request.name,
                     url_shortcode=video_id,
                     transcript_accessibility=False)
-        logger.error(f"Validation error: {str(err)}")
+        logger.error(f"Validation error: {err}")
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     except CouldNotRetrieveTranscript as err:
-        logger.error(f"Could not retrieve a transcript for the video: {str(err)}")
+        logger.error(f"Could not retrieve a transcript for the video: {err}")
         raise HTTPException(
             status_code=400,
             detail="Could not retrieve a transcript for the video.") from err
 
     except Exception as err:
-        logger.error(f"Unexpected error: {str(err)}")
+        logger.error(f"Unexpected error: {err}")
         raise HTTPException(status_code=500, detail="Internal server error") from err
 
 

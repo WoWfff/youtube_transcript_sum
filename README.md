@@ -13,7 +13,7 @@ DB_PASS=database_password
 GEMINI_API_KEY=your_key
 ```
 
-You can get API key here: [text](https://aistudio.google.com/api-keys)
+You can get API key here: [api-keys](https://aistudio.google.com/api-keys)
 
 You also need a postgresql installed on your system.
 

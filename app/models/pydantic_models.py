@@ -1,11 +1,19 @@
 """Pydantic models for request/response validation."""
 
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 
-class Url(BaseModel):
+class PureState(BaseModel):
+    """State for pure requst"""
+    state: bool = False
+
+
+class SumRequest(BaseModel):
     """YouTube URL model."""
     name: str
+    pure_state: PureState
 
 
 class SummaryResponse(BaseModel):
@@ -33,7 +41,8 @@ class FileResponse(BaseModel):
     text: str
 
 
-class TranslateRequest(BaseModel):
+class SumAndTranslateRequest(BaseModel):
     """Combined request model for translation."""
     name: str
     language: str
+    pure_state: PureState

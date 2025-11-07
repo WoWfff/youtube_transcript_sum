@@ -1,0 +1,60 @@
+# Python version support
+target-version = "py313"
+ 
+# Main settings
+line-length = 120 # Maximum line length for code
+indent-width = 4 # Indent width
+ 
+# Directories to consider when resolving imports from first/third-party sources
+src = ["src"]
+ 
+# Linter settings
+[lint]
+# Unstable and preview rules
+preview = true
+# Rules that the linter should apply
+select = [
+    "UP",   # pyupgrade
+    "I",    # isort
+    "E",    # flake8-errors
+    "W",    # flake8-warnings
+    "F",    # flake8-pyflakes
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "S",    # flake8-bandit
+    "BLE",  # flake8-blind-except
+    "T20",  # flake8-print
+    "T10",  # flake8-debugger
+    "PT",   # flake8-pytest-style
+    "RUF",  # Ruff
+    "DTZ",  # flake8-datetimez
+    "ERA",  # eradicate
+    "FURB", # refurb
+]
+# Ignore specific linter warnings
+ignore = [
+    "C408",  # Unnecessary call to dict, list, etc.
+    "RUF001", # Ignore similar characters with different ASCII
+    "RUF002", # Ignore similar characters with different ASCII
+    "RUF003", # Ignore similar characters with different ASCII
+    "S110",  # try-except-pass
+    "UP015", # "r" method
+    "FURB101", # read file in 1 line
+]
+# Exclude directories and files from linting
+exclude = [
+    "src/tests/**",
+]
+# Errors that can be fixed automatically
+fixable = [
+    "I", # import sorting
+]
+ 
+# Formatter settings
+[format]
+quote-style = "double" # 'single' for single quotes, "double" for double quotes
+indent-style = "space"
+ 
+# Additional settings for plugins
+[lint.flake8-bandit]
+check-typed-exception = true # Check typed exceptions

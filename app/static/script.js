@@ -43,12 +43,16 @@ document.getElementById('summarize-form').addEventListener('submit', async (e) =
     hideError();
     
     try {
+        const pureState = document.getElementById('pure-state-summarize').checked;
         const response = await fetch('/url/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name: url })
+            body: JSON.stringify({ 
+                name: url,
+                pure_state: { state: pureState }
+            })
         });
         
         const contentType = response.headers.get('content-type') || '';
@@ -113,6 +117,7 @@ document.getElementById('translate-form').addEventListener('submit', async (e) =
     hideError();
     
     try {
+        const pureState = document.getElementById('pure-state-translate').checked;
         const response = await fetch('/url/translate', {
             method: 'POST',
             headers: {
@@ -120,7 +125,8 @@ document.getElementById('translate-form').addEventListener('submit', async (e) =
             },
             body: JSON.stringify({ 
                 name: url,
-                language: language
+                language: language,
+                pure_state: { state: pureState }
             })
         });
         
