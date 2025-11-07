@@ -1,6 +1,6 @@
 """Dependencies for dependency injection."""
 
-from fastapi import Request, HTTPException
+from fastapi import HTTPException, Request
 
 # Global storage for user URLs
 user_urls: dict[str, str] = {}

@@ -1,8 +1,9 @@
 """Database models."""
 
-from sqlalchemy import String, Boolean, ForeignKey, func, DateTime
-from sqlalchemy.orm import DeclarativeBase, Mapped, MappedColumn, relationship
 from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, MappedColumn, relationship
 
 
 class Base(DeclarativeBase):
@@ -23,10 +24,10 @@ class UserBase(Base):
         onupdate=func.now()
     )
 
-    urls: Mapped[list["UrlBase"]] = relationship(  # noqa: UP037
+    urls: Mapped[list["UrlBase"]] = relationship(
         back_populates="owner"
     )
-    summarizations: Mapped[list["SumBase"]] = relationship(back_populates="user")  # noqa: UP037
+    summarizations: Mapped[list["SumBase"]] = relationship(back_populates="user")
 
 
 class UrlBase(Base):
@@ -38,11 +39,11 @@ class UrlBase(Base):
     transcript_accessibility: Mapped[bool] = MappedColumn(Boolean, nullable=True)
     owner_id: Mapped[int] = MappedColumn(ForeignKey("users.id"), nullable=False)
 
-    owner: Mapped["UserBase"] = relationship(  # noqa: UP037
+    owner: Mapped["UserBase"] = relationship(
         back_populates="urls"
     )
 
-    summarization: Mapped["SumBase"] = relationship(  # noqa: UP037
+    summarization: Mapped["SumBase"] = relationship(
         back_populates="url",
         uselist=False
     )
@@ -59,10 +60,10 @@ class SumBase(Base):
     language_code: Mapped[str] = MappedColumn(String(100), nullable=True)
     created_at: Mapped[datetime] = MappedColumn(DateTime, default=datetime.utcnow)
 
-    url: Mapped["UrlBase"] = relationship(  # noqa: UP037
+    url: Mapped["UrlBase"] = relationship(
         back_populates="summarization"
     )
 
-    user: Mapped["UserBase"] = relationship(  # noqa: UP037
+    user: Mapped["UserBase"] = relationship(
         back_populates="summarizations"
     )

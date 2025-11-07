@@ -1,11 +1,10 @@
+from typing import Any, Literal, overload
+
+from sqlalchemy import create_engine, delete, select, update
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, select, update, delete
 
 from app.configs.db_config import settings
 from app.services.database.init_db import init_db
-
-from typing import Any, overload, Literal
-
 
 db_url = settings.DATABASE_URL_psycopg(table_name="youtube_transcript")
 engine = create_engine(url=db_url, echo=False)

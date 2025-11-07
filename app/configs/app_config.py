@@ -1,9 +1,9 @@
 """Application configuration."""
 
 import json
-from pathlib import Path
-from functools import lru_cache
 from enum import Enum
+from functools import lru_cache
+from pathlib import Path
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
 
@@ -33,7 +33,7 @@ def get_system_instructions(mode: str) -> str:
     except json.JSONDecodeError as err:
         raise ValueError("Invalid JSON in config file") from err
     except Exception as err:
-        raise ValueError(f"Error reading config file: {str(err)}") from err
+        raise ValueError(f"Error reading config file: {err}") from err
 
 @lru_cache
 def get_language_name(language_code: str) -> str:
@@ -54,4 +54,4 @@ def get_language_name(language_code: str) -> str:
     except json.JSONDecodeError as err:
         raise ValueError("Invalid JSON in config file") from err
     except Exception as err:
-        raise ValueError(f"Error reading config file: {str(err)}") from err
+        raise ValueError(f"Error reading config file: {err}") from err

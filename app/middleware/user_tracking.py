@@ -1,13 +1,13 @@
 """Middleware for user tracking."""
 
 import uuid
+
 from fastapi import Request
+from sqlalchemy import create_engine
 
 from app.configs.db_config import settings
 from app.models.db_models import UserBase
 from app.services.database.methods import Insert, Select
-
-from sqlalchemy import create_engine
 
 db_url = settings.DATABASE_URL_psycopg(table_name="youtube_transcript")
 engine = create_engine(url=db_url, echo=False)
