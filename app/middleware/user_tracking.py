@@ -5,7 +5,7 @@ from fastapi import Request
 
 from app.configs.db_config import settings
 from app.models.db_models import UserBase
-from app.database.methods import Insert, Select
+from app.services.database.methods import Insert, Select
 
 from sqlalchemy import create_engine
 

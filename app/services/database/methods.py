@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, select, update, delete
 
 from app.configs.db_config import settings
-from app.database.init_db import init_db
+from app.services.database.init_db import init_db
 
 from typing import Any, overload, Literal
 

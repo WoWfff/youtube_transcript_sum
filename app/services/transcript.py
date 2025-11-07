@@ -49,14 +49,12 @@ class TranscriptService:
                 if list_of_transcripts._manually_created_transcripts:
                     for transcript in list_of_transcripts._manually_created_transcripts:
                         return (self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)]),
-                                str(transcript)
-                                )
+                                str(transcript))
 
                 elif list_of_transcripts._generated_transcripts:
                     for transcript in list_of_transcripts._generated_transcripts:
                         return (self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)]),
-                                str(transcript)
-                                )
+                                str(transcript))
 
             return await asyncio.to_thread(fetch)
 

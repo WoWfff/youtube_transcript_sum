@@ -20,7 +20,7 @@ class SummarizerService:
             def _generate():
                 with Client(api_key=api_key) as client:
                     return client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
+                        model="gemini-2.5-flash",
                         config=types.GenerateContentConfig(
                             system_instruction=[
                                 system_instruction,
@@ -45,8 +45,8 @@ class SummarizerService:
     async def summarize_and_translate_request(
     content: str,
     system_instruction: str,
-    preferred_translate_language: str | None = None) -> str:
-        """Translating trascript with Gemini."""
+    preferred_translate_language: str) -> str:
+        """Summarize and translate trascript with Gemini."""
         try:
             def _generate():
                 with Client() as client:
@@ -54,10 +54,9 @@ class SummarizerService:
                         model="gemini-2.5-flash-lite",
                         config=types.GenerateContentConfig(
                             system_instruction=[
-                                system_instruction,
+                                (f"You can use only this language to answer: {preferred_translate_language}"),
                                 "Output format: text without markdown formatting",
-                                (f"preferred language: {preferred_translate_language}"
-                                if preferred_translate_language else None),
+                                system_instruction,
                             ],
                             temperature=0.2,
                         ),
