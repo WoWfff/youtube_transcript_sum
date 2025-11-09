@@ -1,6 +1,7 @@
 """Service for fetching and processing YouTube transcripts."""
 
 import asyncio
+import logging
 import re
 
 from youtube_transcript_api import YouTubeTranscriptApi, formatters
@@ -8,6 +9,8 @@ from youtube_transcript_api import _errors as youtube_transcript_api_errors
 from youtube_transcript_api._api import FetchedTranscript
 
 from app.configs.app_config import YOUTUBE_URL_TYPES
+
+logger = logging.getLogger(__name__)
 
 
 class TranscriptService:
@@ -20,6 +23,8 @@ class TranscriptService:
     @staticmethod
     def get_url_type(url: str) -> str:
         """Determining the type of YouTube URL."""
+        # Check in order: shorts (most specific), then long, then short
+        # This ensures shorts URLs are detected correctly before long URLs
         for key, value in YOUTUBE_URL_TYPES.items():
             if bool(re.search(value, url, re.IGNORECASE)):
                 return str(key)
@@ -32,6 +37,9 @@ class TranscriptService:
             match = re.search(r"watch\?v=([\w-]+)", url)
         elif url_type == "short":
             match = re.search(r"youtu\.be\/([\w-]+)(?=\?|$)", url)
+        elif url_type == "shorts":
+            # Match both www.youtube.com/shorts/ and youtube.com/shorts/
+            match = re.search(r"(?:www\.)?youtube\.com/shorts/([\w-]+)(?=\?|$|#)", url, re.IGNORECASE)
         else:
             raise ValueError("Unknown URL type")
 
@@ -46,22 +54,43 @@ class TranscriptService:
 
             def fetch():
                 list_of_transcripts = self.ytt_api.list(video_id=video_id)
+
+                # English language variants to check (in priority order)
+                english_variants = ["en", "en-US", "en-GB", "en-AU", "en-CA", "en-IN", "en-IE"]
+
+                # Prefer manually created transcripts
                 if list_of_transcripts._manually_created_transcripts:
+                    # Check for English variants first
+                    for lang in english_variants:
+                        if lang in list_of_transcripts._manually_created_transcripts:
+                            return (self.ytt_api.fetch(video_id=video_id, languages=[lang]), lang)
+
+                    # If no English variant found, use the first available manually created transcript
                     for transcript in list_of_transcripts._manually_created_transcripts:
                         return (self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)]),
                                 str(transcript))
 
-                elif list_of_transcripts._generated_transcripts:
+                # Fall back to generated transcripts
+                if list_of_transcripts._generated_transcripts:
+                    # Check for English variants first
+                    for lang in english_variants:
+                        if lang in list_of_transcripts._generated_transcripts:
+                            return (self.ytt_api.fetch(video_id=video_id, languages=[lang]), lang)
+
+                    # If no English variant found, use the first available generated transcript
                     for transcript in list_of_transcripts._generated_transcripts:
                         return (self.ytt_api.fetch(video_id=video_id, languages=[str(transcript)]),
                                 str(transcript))
+
+                # No transcripts available
+                raise ValueError("No transcripts available for this video")
 
             return await asyncio.to_thread(fetch)
 
         except youtube_transcript_api_errors.TranscriptsDisabled as err:
             raise ValueError("Transcripts for this video are disabled") from err
         except Exception as err:
-            raise ValueError(f"Error fetching transcript: {str(err)}") from err
+            raise ValueError(f"Error fetching transcript: {err}") from err
 
     def format_transcripts(self, transcript: FetchedTranscript) -> str:
         """Formatting the transcript into text."""

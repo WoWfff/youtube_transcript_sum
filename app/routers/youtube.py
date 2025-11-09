@@ -64,6 +64,20 @@ async def process_url(
                 url_shortcode=video_id
             )
             if sum_instance:
+                if sum_instance:
+                    # Writing data into UrlBase table
+                    url_instance = Insert(model=UrlBase, engine=engine).one(
+                        owner_id=db_user.id,
+                        url=sum_request.name,
+                        url_shortcode=video_id,
+                        transcript_accessibility=True)
+                    # Adding summarization into database
+                    Insert(model=SumBase, engine=engine).one(
+                        user_owner_id=db_user.id,
+                        url_owner_id=url_instance.id,
+                        url_shortcode=video_id,
+                        path_to_sum_file=str(sum_instance.path_to_sum_file)
+                        )
                 path_to_file = sum_instance.path_to_sum_file
                 with open(path_to_file, "r") as file:
                     text = file.read()
@@ -170,6 +184,20 @@ async def process_url_with_translation(
                 language_code=sum_and_translate_request.language
             )
             if sum_instance:
+                # Writing data into UrlBase table
+                url_instance = Insert(model=UrlBase, engine=engine).one(
+                    owner_id=db_user.id,
+                    url=sum_and_translate_request.name,
+                    url_shortcode=video_id,
+                    transcript_accessibility=True)
+                # Adding summarization into database
+                Insert(model=SumBase, engine=engine).one(
+                    user_owner_id=db_user.id,
+                    url_owner_id=url_instance.id,
+                    url_shortcode=video_id,
+                    path_to_sum_file=str(sum_instance.path_to_sum_file),
+                    language_code=sum_and_translate_request.language
+                    )
                 path_to_file = sum_instance.path_to_sum_file
                 with open(path_to_file, "r") as file:
                     text = file.read()

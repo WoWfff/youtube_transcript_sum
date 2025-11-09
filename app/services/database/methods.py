@@ -1,7 +1,7 @@
 from typing import Any, Literal, overload
 
-from sqlalchemy import create_engine, delete, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, delete, inspect, select, text, update
+from sqlalchemy.orm import Session, joinedload
 
 from app.configs.db_config import settings
 from app.services.database.init_db import init_db
@@ -38,6 +38,18 @@ class Select(BaseCRUD):
             result = session.scalars(stmt).all()
             return result
 
+    def all_joined(self) -> list:
+        """
+        Same as def all() but with getting all relationships.
+        """
+        with self._session() as session:
+            stmt = (
+                select(self.model)
+                .options(joinedload("*"))  # getting all relationships
+            )
+            result = session.scalars(stmt).all()
+            return result
+
     def by_id(self, item_id: int) -> Any:
         """
         Return database obj of item with specific item_id.
@@ -69,6 +81,38 @@ class Select(BaseCRUD):
         """
         with self._session() as session:
             stmt = select(self.model)
+
+            for field, value in filters.items():
+                if not hasattr(self.model, field):
+                    raise AttributeError(
+                        f"Model {self.model.__name__} has no attribute '{field}'"
+                    )
+                column = getattr(self.model, field)
+                stmt = stmt.where(column == value)
+
+            if many:
+                return session.scalars(stmt).all()
+            else:
+                return session.scalar(stmt)
+
+    def by_filter_joined(
+        self,
+        many: bool = False,
+        **filters
+    ) -> Any | list[Any] | None:
+        """
+        Get records by filters, automatically joinedload all relationships.
+
+        Example:
+            url = Select(UrlBase, engine).by_filter_joined(id=1)
+            urls = Select(UrlBase, engine).by_filter_joined(many=True, user_id=42)
+        """
+        with self._session() as session:
+            stmt = select(self.model)
+
+            mapper = inspect(self.model)
+            for rel in mapper.relationships:
+                stmt = stmt.options(joinedload(getattr(self.model, rel.key)))
 
             for field, value in filters.items():
                 if not hasattr(self.model, field):
@@ -143,4 +187,11 @@ class Delete(BaseCRUD):
         with self._session() as session:
             stmt = delete(self.model).where(self.model.id == item_id)
             session.execute(stmt)
+            session.commit()
+
+
+class Execute(BaseCRUD):
+    def execute(self, query: str, params: dict | None = None):
+        with self._session() as session:
+            session.execute(text(query), params or {})
             session.commit()

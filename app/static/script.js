@@ -163,11 +163,28 @@ document.getElementById('translate-form').addEventListener('submit', async (e) =
 
 // Helper function to validate YouTube URL
 function isValidYouTubeUrl(url) {
+    if (!url || typeof url !== 'string') {
+        return false;
+    }
+    
+    // Remove any trailing whitespace and check
+    url = url.trim();
+    
+    // Remove URL fragments and query parameters for validation
+    const urlWithoutParams = url.split('?')[0].split('#')[0];
+    
     const patterns = [
+        // Standard YouTube watch URLs: https://www.youtube.com/watch?v=VIDEO_ID
+        // Note: v= parameter is required, so we check the full URL
         /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
-        /^https?:\/\/youtu\.be\/[\w-]+/
+        // Short URLs: https://youtu.be/VIDEO_ID
+        /^https?:\/\/youtu\.be\/[\w-]+/,
+        // YouTube Shorts: https://www.youtube.com/shorts/VIDEO_ID
+        /^https?:\/\/(www\.)?youtube\.com\/shorts\/[\w-]+/
     ];
-    return patterns.some(pattern => pattern.test(url));
+    
+    // Check both full URL (for watch URLs with params) and URL without params (for shorts)
+    return patterns.some(pattern => pattern.test(url) || pattern.test(urlWithoutParams));
 }
 
 // Helper function to show error
@@ -207,6 +224,7 @@ function copyToClipboard(elementId, buttonElement) {
         showError('Failed to copy to clipboard');
     });
 }
+
 
 // Auto-fill URL from previous request if available
 window.addEventListener('load', async () => {

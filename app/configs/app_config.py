@@ -7,7 +7,11 @@ from pathlib import Path
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
 
-YOUTUBE_URL_TYPES: dict[str, str] = {"long": r"youtube\.com/\w", "short": r"youtu\.be/\w"}
+YOUTUBE_URL_TYPES: dict[str, str] = {
+    "shorts": r"youtube\.com/shorts/\w",  # Check shorts first (more specific)
+    "long": r"youtube\.com/watch\?v=\w",  # More specific pattern for watch URLs
+    "short": r"youtu\.be/\w"
+}
 
 YOUTUBE_THUMBNAIL_URL = "https://img.youtube.com/vi/{}/maxresdefault.jpg"  # use .format(video_id) to enter video_id in variable  # noqa: E501
 
@@ -36,6 +40,7 @@ def get_system_instructions(mode: str) -> str:
         raise ValueError("Invalid JSON in config file") from err
     except Exception as err:
         raise ValueError(f"Error reading config file: {err}") from err
+
 
 @lru_cache
 def get_language_name(language_code: str) -> str:

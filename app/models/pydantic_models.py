@@ -12,6 +12,7 @@ class UrlData(BaseModel):
     created_at: datetime
     url: str
     thumbnail_url: str | None = None
+    transcipt: str | None = None
 
 
 class SummarizesResponse(BaseModel):
@@ -21,7 +22,7 @@ class SummarizesResponse(BaseModel):
 
 
 class PureState(BaseModel):
-    """State for pure requst."""
+    """State for pure request."""
     state: bool = False
 
 

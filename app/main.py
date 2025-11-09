@@ -3,13 +3,12 @@
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.middleware.user_tracking import add_user_id
-from app.routers import youtube
-from app.routers import summarizes
+from app.routers import summarizes, youtube
 
 # Logger settings
 logging.basicConfig(level=logging.INFO)
@@ -47,3 +46,13 @@ async def root():
         "docs": "/docs",
         "health": "/health"
     }
+
+
+# History page endpoint - serves HTML page only
+@app.get("/summarizes/")
+async def history_page():
+    """Serve the history HTML page."""
+    html_file = static_path / "history.html"
+    if html_file.exists():
+        return FileResponse(html_file)
+    return {"error": "History page not found"}
