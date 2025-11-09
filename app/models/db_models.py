@@ -38,6 +38,7 @@ class UrlBase(Base):
     url_shortcode: Mapped[str] = MappedColumn(String(100), nullable=True)
     transcript_accessibility: Mapped[bool] = MappedColumn(Boolean, nullable=True)
     owner_id: Mapped[int] = MappedColumn(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = MappedColumn(DateTime, default=datetime.utcnow)
 
     owner: Mapped["UserBase"] = relationship(
         back_populates="urls"

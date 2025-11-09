@@ -2,11 +2,26 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
+class UrlData(BaseModel):
+    """UrlData model."""
+    created_at: datetime
+    url: str
+    thumbnail_url: str | None = None
+
+
+class SummarizesResponse(BaseModel):
+    """All user summarizes response model."""
+    cookies_user_id: str
+    user_urls: dict[int, UrlData]
+
+
 class PureState(BaseModel):
-    """State for pure requst"""
+    """State for pure requst."""
     state: bool = False
 
 
@@ -24,7 +39,7 @@ class SummaryResponse(BaseModel):
 class UserUrlResponse(BaseModel):
     """User URL response model."""
     user_id: str
-    url: str | list[str] | None
+    url: str | None
 
 
 class HealthResponse(BaseModel):

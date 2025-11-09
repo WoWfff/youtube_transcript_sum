@@ -9,6 +9,8 @@ CONFIG_PATH = Path(__file__).parent / "config.json"
 
 YOUTUBE_URL_TYPES: dict[str, str] = {"long": r"youtube\.com/\w", "short": r"youtu\.be/\w"}
 
+YOUTUBE_THUMBNAIL_URL = "https://img.youtube.com/vi/{}/maxresdefault.jpg"  # use .format(video_id) to enter video_id in variable  # noqa: E501
+
 
 class Modes(Enum):
     SUMMARIZING = "summarizing"

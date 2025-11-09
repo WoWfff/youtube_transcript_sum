@@ -2,13 +2,14 @@
 
 import logging
 from pathlib import Path
+
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
-from app.routers import youtube
 from app.middleware.user_tracking import add_user_id
-
+from app.routers import youtube
+from app.routers import summarizes
 
 # Logger settings
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +32,7 @@ app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 # Include routers
 app.include_router(youtube.router, tags=["YouTube"])
+app.include_router(summarizes.router, tags=["Summarizes"])
 
 
 # Root endpoint - serve the main page

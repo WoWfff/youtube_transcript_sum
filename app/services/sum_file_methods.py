@@ -1,6 +1,5 @@
-from pathlib import Path
 import os
-
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 summarizings_folder_path = BASE_DIR / "summarizings"
@@ -27,7 +26,7 @@ class File:
         """
         try:
             self.create_dir()
-            with open(self.file_path, "w") as file:
+            with open(self.file_path, "w") as file:  # noqa: FURB103
                 file.write(self.text)
                 return self.file_path
 

@@ -1,9 +1,9 @@
 """Service for fetching and processing YouTube transcripts."""
 
-import re
 import asyncio
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api import formatters
+import re
+
+from youtube_transcript_api import YouTubeTranscriptApi, formatters
 from youtube_transcript_api import _errors as youtube_transcript_api_errors
 from youtube_transcript_api._api import FetchedTranscript
 

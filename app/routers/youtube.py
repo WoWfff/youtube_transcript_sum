@@ -10,7 +10,14 @@ from youtube_transcript_api._errors import CouldNotRetrieveTranscript
 from app.configs.app_config import Modes, get_language_name, get_system_instructions
 from app.dependencies import get_user_id
 from app.models.db_models import SumBase, UrlBase, UserBase
-from app.models.pydantic_models import HealthResponse, SumAndTranslateRequest, SumRequest, UserUrlResponse
+from app.models.pydantic_models import (
+    HealthResponse,
+    SumAndTranslateRequest,
+    SummarizesResponse,
+    SumRequest,
+    UrlData,
+    UserUrlResponse,
+)
 from app.services.database.methods import Insert, Select, engine
 from app.services.sum_file_methods import File
 from app.services.summarizer import SummarizerService
@@ -132,13 +139,12 @@ async def process_url(
 
 
 @router.post("/url/translate")
-async def summarize_and_translate(
+async def process_url_with_translation(
     user_id: Annotated[str, Depends(get_user_id)],
     sum_and_translate_request: SumAndTranslateRequest,
     ):
     """Process the video URL and translate the transcript."""
     try:
-        # Saving the user's URL
         db_user = Select(model=UserBase, engine=engine).by_filter(cookies=user_id)
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -263,23 +269,36 @@ async def my_url(
     }
 
 
-@router.get("/my_urls/", response_model=UserUrlResponse)
+@router.get("/my_urls/", response_model=SummarizesResponse)
 async def my_urls(
     request: Request,
     cookies_user_id: Annotated[str, Depends(get_user_id)],
 ):
     """Returns the user's saved URL."""
-    db_user = Select(model=UserBase, engine=engine).by_filter(cookies=cookies_user_id)
+    try:
+        db_user = Select(model=UserBase, engine=engine).by_filter(cookies=cookies_user_id)
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        urls_orm = Select(model=UrlBase, engine=engine).by_filter(many=True, owner_id=db_user.id)
 
-    urls = Select(model=UrlBase, engine=engine).by_filter(many=True, owner_id=db_user.id)
+        if not urls_orm:
+            return None
 
-    return {
-        "user_id": cookies_user_id,
-        "url": [u.url for u in urls] if urls else [],
-    }
+        data = {}
+        for counter, url_orm in enumerate(urls_orm, start=1):
+            data[counter] = UrlData(
+                created_at=url_orm.created_at,
+                url=url_orm.url
+            )
+
+        return SummarizesResponse(cookies_user_id=cookies_user_id, user_urls=data)
+
+    except HTTPException:
+        raise
+    except Exception as err:
+        logger.error(f"Unexpected error: {err}")
+        raise HTTPException(status_code=500, detail="Internal server error") from err
 
 
 @router.get("/health", response_model=HealthResponse)

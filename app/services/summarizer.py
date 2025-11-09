@@ -1,13 +1,15 @@
 """Service for summarizing transcripts using Gemini."""
 
 import asyncio
-from google.genai import types, Client
+import logging
+from os import getenv
 
 from dotenv import load_dotenv
-from os import getenv
+from google.genai import Client, types
 
 load_dotenv()
 api_key = getenv("GEMINI_API_KEY")
+logger = logging.getLogger(__name__)
 
 
 class SummarizerService:
@@ -31,6 +33,10 @@ class SummarizerService:
                         contents=content,
                     )
 
+            logger.info(f"System instructions: {[
+                                system_instruction,
+                                "Output format: text without markdown formatting",
+                            ]}")
             response = await asyncio.to_thread(_generate)
 
             if not response or not response.text:
@@ -39,7 +45,7 @@ class SummarizerService:
             return response.text
 
         except Exception as err:
-            raise ValueError(f"Error while summarizing transcript: {str(err)}") from err
+            raise ValueError(f"Error while summarizing transcript: {err}") from err
 
     @staticmethod
     async def summarize_and_translate_request(
@@ -51,7 +57,7 @@ class SummarizerService:
             def _generate():
                 with Client() as client:
                     return client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
+                        model="gemini-2.5-flash",
                         config=types.GenerateContentConfig(
                             system_instruction=[
                                 (f"You can use only this language to answer: {preferred_translate_language}"),
@@ -62,7 +68,11 @@ class SummarizerService:
                         ),
                         contents=content,
                     )
-
+            logger.info(f"System instructions: {[
+                                (f"You can use only this language to answer: {preferred_translate_language}"),
+                                "Output format: text without markdown formatting",
+                                system_instruction,
+                            ]}")
             response = await asyncio.to_thread(_generate)
 
             if not response or not response.text:
@@ -71,4 +81,4 @@ class SummarizerService:
             return response.text
 
         except Exception as err:
-            raise ValueError(f"Error while summarizing transcript: {str(err)}") from err
+            raise ValueError(f"Error while summarizing transcript: {err}") from err
