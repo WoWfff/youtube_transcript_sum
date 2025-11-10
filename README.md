@@ -1,20 +1,285 @@
-**For correct operation, add the .env file to the root of the project.**
+# 🎬 YouTube Transcript Summarizer
 
-**Name of DB:**
-```youtube_transcript```
+A modern web application that extracts, summarizes, and translates YouTube video transcripts using Google's Gemini AI. Built with FastAPI, PostgreSQL, and vanilla JavaScript.
 
-The file must contain the following lines for your database and GEMINI api key:
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.119-green.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+## ✨ Features
+
+- 🎥 **YouTube Video Processing** - Extract transcripts from any YouTube video (including Shorts)
+- 🤖 **AI-Powered Summarization** - Generate concise summaries using Google Gemini AI
+- 🌍 **Multi-Language Translation** - Translate and summarize transcripts in multiple languages
+- 🔐 **User Authentication** - Secure JWT-based authentication with password hashing
+- 📚 **Video History** - Save and manage your summarized videos
+- 📄 **Transcript Viewing** - View full transcripts with expand/collapse functionality
+- 🎨 **Modern UI** - Clean, responsive interface with smooth animations
+- 🔒 **Secure** - HttpOnly cookies, bcrypt password hashing, and JWT tokens
+
+## 📸 Screenshots
+
+<div align="center">
+  <h3>Main Page</h3>
+  <img src="screenshots/main-page.png" alt="Main Page" width="800"/>
+  <p><em>The main page with URL input form for summarizing YouTube videos</em></p>
+</div>
+
+<div align="center">
+  <h3>Video History</h3>
+  <img src="screenshots/history-page.png" alt="History Page" width="800"/>
+  <p><em>View all your summarized videos with thumbnails and metadata</em></p>
+</div>
+
+<div align="center">
+  <h3>Authentication</h3>
+  <img src="screenshots/auth-modal.png" alt="Auth Modal" width="600"/>
+  <p><em>Secure login and registration with JWT authentication</em></p>
+</div>
+
+<div align="center">
+  <h3>Video Cards</h3>
+  <img src="screenshots/video-history.png" alt="Video History" width="800"/>
+  <p><em>Detailed view of video cards with thumbnails and creation dates</em></p>
+</div>
+
+<div align="center">
+  <h3>Summary Result</h3>
+  <img src="screenshots/summary-result.png" alt="Summary Result" width="800"/>
+  <p><em>AI-generated summary displayed after processing a video</em></p>
+</div>
+
+<div align="center">
+  <h3>Transcript View</h3>
+  <img src="screenshots/transcript-view.png" alt="Transcript View" width="800"/>
+  <p><em>Expandable transcript view with copy functionality</em></p>
+</div>
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.11 or higher
+- PostgreSQL 13 or higher
+- Google Gemini API key ([Get one here](https://aistudio.google.com/api-keys))
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/youtube-transcript-summarizer.git
+   cd youtube-transcript-summarizer
+   ```
+
+2. **Create a virtual environment**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up environment variables**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_USER=your_database_user
+   DB_PASS=your_database_password
+   GEMINI_API_KEY=your_gemini_api_key
+   JWT_SECRET_KEY=your-secret-key-change-this-in-production
+   ```
+
+5. **Create the database**
+   
+   Create a PostgreSQL database named `youtube_transcript`:
+   ```sql
+   CREATE DATABASE youtube_transcript;
+   ```
+
+6. **Initialize the database**
+   
+   The database tables will be created automatically on first run. Make sure your database connection settings in `.env` are correct.
+
+7. **Run the application**
+   ```bash
+   fastapi run run.py or fastapi dev run.py
+   ```
+
+8. **Access the application**
+   
+   Open your browser and navigate to `http://127.0.0.1:8000`
+
+## 📖 Usage
+
+### Getting Started
+
+1. **Register an account** - Click the "Login" button in the top-right corner and register a new account
+2. **Summarize a video** - Enter a YouTube URL in the main page and click "Summarize"
+3. **Translate a video** - Enter a YouTube URL, select a target language, and click "Translate"
+4. **View history** - Click "History" in the top-left corner to see all your summarized videos
+5. **View transcripts** - Click "Show more" on any video card to expand the full transcript
+
+### Supported YouTube URL Formats
+
+- Long URLs: `https://www.youtube.com/watch?v=VIDEO_ID`
+- Short URLs: `https://youtu.be/VIDEO_ID`
+- Shorts: `https://www.youtube.com/shorts/VIDEO_ID`
+
+## 🏗️ Project Structure
 
 ```
-DB_HOST=database_host
-DB_PORT=5432
-DB_USER=database_user
-DB_PASS=database_password
-GEMINI_API_KEY=your_key
+youtube-transcript-summarizer/
+├── app/
+│   ├── configs/          # Configuration files
+│   │   ├── app_config.py # Application settings
+│   │   ├── config.json   # System instructions and languages
+│   │   └── db_config.py  # Database configuration
+│   ├── middleware/       # Custom middleware
+│   │   └── user_tracking.py
+│   ├── models/           # Data models
+│   │   ├── db_models.py  # SQLAlchemy ORM models
+│   │   └── pydantic_models.py # Pydantic request/response models
+│   ├── routers/          # API route handlers
+│   │   ├── auth.py       # Authentication endpoints
+│   │   ├── summarizes.py # Summarization history endpoints
+│   │   └── youtube.py    # YouTube processing endpoints
+│   ├── services/         # Business logic
+│   │   ├── database/     # Database operations
+│   │   ├── summarizer.py # AI summarization service
+│   │   ├── transcript.py # YouTube transcript fetching
+│   │   └── user_sums_methods.py # User history management
+│   ├── static/           # Frontend files
+│   │   ├── index.html    # Main page
+│   │   ├── history.html  # History page
+│   │   ├── script.js     # Main page JavaScript
+│   │   ├── history.js    # History page JavaScript
+│   │   ├── auth.js       # Authentication JavaScript
+│   │   └── styles.css    # Global styles
+│   ├── summarizings/     # Generated summary files
+│   ├── utils/            # Utility functions
+│   │   └── jwt.py        # JWT token utilities
+│   ├── dependencies.py   # FastAPI dependencies
+│   └── main.py           # Application entry point
+├── requirements.txt      # Python dependencies
+├── run.py               # Application runner
+└── README.md            # This file
 ```
 
-You can get API key here: [api-keys](https://aistudio.google.com/api-keys)
+## 🔧 API Endpoints
 
-You also need a postgresql installed on your system.
+### Authentication
 
-Only after that, install requirements.txt, otherwise you will have errors.
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Login and receive JWT token
+- `POST /auth/logout` - Logout and clear token
+- `GET /auth/me` - Get current user information
+
+### YouTube Processing
+
+- `POST /url/` - Summarize a YouTube video transcript
+- `POST /url/translate` - Translate and summarize a YouTube video transcript
+- `GET /my_url/` - Get user's last saved URL
+- `GET /my_urls/` - Get all user's saved URLs
+
+### History
+
+- `GET /summarizes/api` - Get all user's summaries (JSON)
+- `DELETE /summarizes/api` - Clear all user's summaries
+
+### Health
+
+- `GET /health` - Health check endpoint
+
+### Documentation
+
+- `GET /docs` - Interactive API documentation (Swagger UI)
+- `GET /redoc` - Alternative API documentation (ReDoc)
+
+## 🔐 Security Features
+
+- **Password Hashing** - All passwords are hashed using bcrypt before storage
+- **JWT Tokens** - Secure token-based authentication
+- **HttpOnly Cookies** - Tokens stored in HttpOnly cookies to prevent XSS attacks
+- **Input Validation** - All inputs are validated using Pydantic models
+- **SQL Injection Protection** - SQLAlchemy ORM prevents SQL injection
+- **Error Handling** - Comprehensive error handling with appropriate HTTP status codes
+
+## 🛠️ Technologies Used
+
+### Backend
+- **FastAPI** - Modern, fast web framework for building APIs
+- **SQLAlchemy** - SQL toolkit and ORM
+- **PostgreSQL** - Relational database
+- **python-jose** - JWT token handling
+- **passlib** - Password hashing
+- **youtube-transcript-api** - YouTube transcript extraction
+- **google-genai** - Google Gemini AI integration
+
+### Frontend
+- **Vanilla JavaScript** - No framework dependencies
+- **HTML5** - Semantic markup
+- **CSS3** - Modern styling with animations
+- **Fetch API** - HTTP requests
+
+## 📝 Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DB_HOST` | PostgreSQL host | Yes |
+| `DB_PORT` | PostgreSQL port | Yes |
+| `DB_USER` | PostgreSQL user | Yes |
+| `DB_PASS` | PostgreSQL password | Yes |
+| `GEMINI_API_KEY` | Google Gemini API key | Yes |
+| `JWT_SECRET_KEY` | Secret key for JWT tokens | Yes (change in production) |
+
+## 🧪 Development
+
+### Running in Development Mode
+
+The application runs with auto-reload enabled by default:
+
+```bash
+fastapi dev run.py
+```
+
+### Code Style
+
+This project uses `ruff` for code formatting and linting. Configuration is in `ruff.toml`.
+
+### Database Migrations
+
+Database tables are created automatically on first run. For production, consider using Alembic for migrations.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- [Google Gemini AI](https://deepmind.google/technologies/gemini/) for AI summarization
+- [youtube-transcript-api](https://github.com/jdepoix/youtube-transcript-api) for transcript extraction
+- [FastAPI](https://fastapi.tiangolo.com/) for the excellent web framework
+
+## 📧 Contact
+
+For questions or support, please open an issue on GitHub.
+
+---
+
+Made with ❤️ using FastAPI and Gemini AI

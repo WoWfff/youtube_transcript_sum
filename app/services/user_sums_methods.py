@@ -23,7 +23,7 @@ class AllSummarizes:
             except (ValueError, TypeError):
                 # Fallback to cookies for backward compatibility
                 db_user = Select(model=UserBase, engine=self.engine).by_filter(cookies=user_id)
-            
+
             if not db_user:
                 raise HTTPException(status_code=404, detail="User not found")
 
@@ -33,7 +33,7 @@ class AllSummarizes:
 
             data = {}
             for counter, url_orm in enumerate(urls_orm, start=1):
-                # Cheking for transcript accessibility
+                # Checking for transcript accessibility
                 if not url_orm.transcript_accessibility:
                     continue
                 # Reading summarization file
@@ -43,7 +43,7 @@ class AllSummarizes:
                         text = file.read()
                 except Exception as err:
                     raise ValueError("Error while reading summarization file.") from err
-                # Formating response data
+                # Formatting response data
                 data[counter] = UrlData(
                     created_at=url_orm.created_at,
                     url=url_orm.url,
@@ -67,7 +67,7 @@ class AllSummarizes:
             except (ValueError, TypeError):
                 # Fallback to cookies for backward compatibility
                 db_user = Select(model=UserBase, engine=self.engine).by_filter(cookies=user_id)
-            
+
             if not db_user:
                 raise HTTPException(status_code=404, detail="User not found")
 

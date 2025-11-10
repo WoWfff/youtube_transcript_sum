@@ -17,7 +17,7 @@ YOUTUBE_URL_TYPES: dict[str, str] = {
 YOUTUBE_THUMBNAIL_URL = "https://img.youtube.com/vi/{}/maxresdefault.jpg"  # use .format(video_id) to enter video_id in variable  # noqa: E501
 
 # JWT Configuration
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-this-in-production")  # Should be in environment variable
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-this-in-production")  # Should be in environment variable  # noqa: E501
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
