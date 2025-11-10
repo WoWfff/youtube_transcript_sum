@@ -20,47 +20,26 @@ A modern web application that extracts, summarizes, and translates YouTube video
 
 ## 📸 Screenshots
 
-<div align="center">
-  <h3>Main Page</h3>
-  <img src="screenshots/main-page.png" alt="Main Page" width="800"/>
-  <p><em>The main page with URL input form for summarizing YouTube videos</em></p>
-</div>
+## 📸 Screenshots
 
-<div align="center">
-  <h3>Video History</h3>
-  <img src="screenshots/history-page.png" alt="History Page" width="800"/>
-  <p><em>View all your summarized videos with thumbnails and metadata</em></p>
-</div>
-
-<div align="center">
-  <h3>Authentication</h3>
-  <img src="screenshots/auth-modal.png" alt="Auth Modal" width="600"/>
-  <p><em>Secure login and registration with JWT authentication</em></p>
-</div>
-
-<div align="center">
-  <h3>Video Cards</h3>
-  <img src="screenshots/video-history.png" alt="Video History" width="800"/>
-  <p><em>Detailed view of video cards with thumbnails and creation dates</em></p>
-</div>
-
-<div align="center">
-  <h3>Summary Result</h3>
-  <img src="screenshots/summary-result.png" alt="Summary Result" width="800"/>
-  <p><em>AI-generated summary displayed after processing a video</em></p>
-</div>
-
-<div align="center">
-  <h3>Transcript View</h3>
-  <img src="screenshots/transcript-view.png" alt="Transcript View" width="800"/>
-  <p><em>Expandable transcript view with copy functionality</em></p>
-</div>
+<table>
+  <tr>
+    <td width="33%"><img src="screenshots/main-page.png" width="100%"/></td>
+    <td width="33%"><img src="screenshots/history-page.png" width="100%"/></td>
+    <td width="33%"><img src="screenshots/auth-modal.png" width="100%"/></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/video-history.png" width="100%"/></td>
+    <td><img src="screenshots/summary-result.png" width="100%"/></td>
+    <td><img src="screenshots/transcript-view.png" width="100%"/></td>
+  </tr>
+</table>
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.11 or higher
+- Python 3.13.7
 - PostgreSQL 13 or higher
 - Google Gemini API key ([Get one here](https://aistudio.google.com/api-keys))
 
@@ -68,8 +47,8 @@ A modern web application that extracts, summarizes, and translates YouTube video
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/youtube-transcript-summarizer.git
-   cd youtube-transcript-summarizer
+   git clone https://github.com/WoWfff/youtube_transcript_sum.git
+   cd youtube_transcript_sum
    ```
 
 2. **Create a virtual environment**
@@ -79,8 +58,13 @@ A modern web application that extracts, summarizes, and translates YouTube video
    ```
 
 3. **Install dependencies**
+   for pip (default)
    ```bash
    pip install -r requirements.txt
+   ```
+   for uv
+   ```
+   uv pip install -r requirements.txt
    ```
 
 4. **Set up environment variables**
