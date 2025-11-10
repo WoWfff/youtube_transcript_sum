@@ -62,3 +62,30 @@ class SumAndTranslateRequest(BaseModel):
     name: str
     language: str
     pure_state: PureState
+
+
+# Auth models
+class UserRegister(BaseModel):
+    """User registration model."""
+    username: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    """User login model."""
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    """Token response model."""
+    access_token: str
+    token_type: str = "bearer"
+    user_id: int
+    username: str
+
+
+class UserResponse(BaseModel):
+    """User response model."""
+    id: int
+    username: str

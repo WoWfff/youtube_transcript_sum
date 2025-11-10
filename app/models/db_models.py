@@ -14,7 +14,9 @@ class UserBase(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = MappedColumn(primary_key=True, autoincrement=True)
-    cookies: Mapped[str] = MappedColumn(String(1024), nullable=False)
+    username: Mapped[str] = MappedColumn(String(100), unique=True, nullable=True)
+    password_hash: Mapped[str] = MappedColumn(String(255), nullable=True)
+    cookies: Mapped[str] = MappedColumn(String(1024), nullable=True)  # Keep for backward compatibility
     created_at: Mapped[datetime] = MappedColumn(
         DateTime(timezone=True), server_default=func.now()
     )

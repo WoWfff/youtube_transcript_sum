@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Fetching history from /summarizes/api');
             const response = await fetch('/summarizes/api', {
                 method: 'GET',
-                credentials: 'same-origin',
+                credentials: 'include',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
@@ -40,6 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             console.log('Response status:', response.status);
+            
+            // Check if unauthorized
+            if (response.status === 401) {
+                throw new Error('Please login to view your history');
+            }
             
             // Check Content-Type
             const contentType = response.headers.get('Content-Type') || '';
@@ -180,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Clearing summarizations...');
                 const response = await fetch('/summarizes/api', {
                     method: 'DELETE',
-                    credentials: 'same-origin',
+                    credentials: 'include',
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
@@ -188,6 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 console.log('Response status:', response.status);
+
+                // Check if unauthorized
+                if (response.status === 401) {
+                    throw new Error('Please login to clear your history');
+                }
 
                 const contentType = response.headers.get('Content-Type') || '';
                 console.log('Content-Type:', contentType);

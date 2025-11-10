@@ -8,7 +8,7 @@ from fastapi.responses import PlainTextResponse
 from youtube_transcript_api._errors import CouldNotRetrieveTranscript
 
 from app.configs.app_config import Modes, get_language_name, get_system_instructions
-from app.dependencies import get_user_id
+from app.dependencies import get_current_user
 from app.models.db_models import SumBase, UrlBase, UserBase
 from app.models.pydantic_models import (
     HealthResponse,
@@ -35,14 +35,12 @@ summarizer_service = SummarizerService()
 @router.post("/url/")
 async def process_url(
     sum_request: SumRequest,
-    user_id: Annotated[str, Depends(get_user_id)],
+    current_user: Annotated[UserBase, Depends(get_current_user)],
 ):
     """Process the video URL and return the summarization."""
     try:
-        # Saving the user's URL
-        db_user = Select(model=UserBase, engine=engine).by_filter(cookies=user_id)
-        if not db_user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # Use authenticated user
+        db_user = current_user
 
         # Determine the URL type
         url_type = transcript_service.get_url_type(sum_request.name)
@@ -154,14 +152,13 @@ async def process_url(
 
 @router.post("/url/translate")
 async def process_url_with_translation(
-    user_id: Annotated[str, Depends(get_user_id)],
+    current_user: Annotated[UserBase, Depends(get_current_user)],
     sum_and_translate_request: SumAndTranslateRequest,
     ):
     """Process the video URL and translate the transcript."""
     try:
-        db_user = Select(model=UserBase, engine=engine).by_filter(cookies=user_id)
-        if not db_user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # Use authenticated user
+        db_user = current_user
 
         # Determine the URL type
         url_type = transcript_service.get_url_type(sum_and_translate_request.name)
@@ -282,17 +279,13 @@ async def process_url_with_translation(
 @router.get("/my_url/", response_model=UserUrlResponse)
 async def my_url(
     request: Request,
-    cookies_user_id: Annotated[str, Depends(get_user_id)]
+    current_user: Annotated[UserBase, Depends(get_current_user)]
     ):
     """Returns the user's last saved URL."""
-    db_user = Select(model=UserBase, engine=engine).by_filter(cookies=cookies_user_id)
-
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    url = Select(model=UrlBase, engine=engine).by_filter(owner_id=db_user.id)
+    url = Select(model=UrlBase, engine=engine).by_filter(owner_id=current_user.id)
 
     return {
-    "user_id": cookies_user_id,
+    "user_id": str(current_user.id),
     "url": url.url if url else None
     }
 
@@ -300,15 +293,11 @@ async def my_url(
 @router.get("/my_urls/", response_model=SummarizesResponse)
 async def my_urls(
     request: Request,
-    cookies_user_id: Annotated[str, Depends(get_user_id)],
+    current_user: Annotated[UserBase, Depends(get_current_user)],
 ):
     """Returns the user's saved URL."""
     try:
-        db_user = Select(model=UserBase, engine=engine).by_filter(cookies=cookies_user_id)
-        if not db_user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        urls_orm = Select(model=UrlBase, engine=engine).by_filter(many=True, owner_id=db_user.id)
+        urls_orm = Select(model=UrlBase, engine=engine).by_filter(many=True, owner_id=current_user.id)
 
         if not urls_orm:
             return None
@@ -320,7 +309,7 @@ async def my_urls(
                 url=url_orm.url
             )
 
-        return SummarizesResponse(cookies_user_id=cookies_user_id, user_urls=data)
+        return SummarizesResponse(cookies_user_id=str(current_user.id), user_urls=data)
 
     except HTTPException:
         raise

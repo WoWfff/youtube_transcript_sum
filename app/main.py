@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.middleware.user_tracking import add_user_id
-from app.routers import summarizes, youtube
+from app.routers import auth, summarizes, youtube
 
 # Logger settings
 logging.basicConfig(level=logging.INFO)
@@ -30,6 +30,7 @@ static_path.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 # Include routers
+app.include_router(auth.router, tags=["Authentication"])
 app.include_router(youtube.router, tags=["YouTube"])
 app.include_router(summarizes.router, tags=["Summarizes"])
 

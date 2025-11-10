@@ -22,6 +22,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.getElementById('summarize-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Check authentication
+    if (!window.currentUser || !window.currentUser()) {
+        showError('Please login to use this feature');
+        // Open auth modal
+        const authBtn = document.getElementById('auth-btn');
+        if (authBtn) authBtn.click();
+        return;
+    }
+    
     const url = document.getElementById('video-url').value.trim();
     const submitBtn = document.getElementById('summarize-btn');
     const btnText = submitBtn.querySelector('.btn-text');
@@ -49,6 +58,7 @@ document.getElementById('summarize-form').addEventListener('submit', async (e) =
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({ 
                 name: url,
                 pure_state: { state: pureState }
@@ -90,6 +100,15 @@ document.getElementById('summarize-form').addEventListener('submit', async (e) =
 document.getElementById('translate-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Check authentication
+    if (!window.currentUser || !window.currentUser()) {
+        showError('Please login to use this feature');
+        // Open auth modal
+        const authBtn = document.getElementById('auth-btn');
+        if (authBtn) authBtn.click();
+        return;
+    }
+    
     const url = document.getElementById('translate-url').value.trim();
     const language = document.getElementById('language').value;
     const submitBtn = document.getElementById('translate-btn');
@@ -123,6 +142,7 @@ document.getElementById('translate-form').addEventListener('submit', async (e) =
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({ 
                 name: url,
                 language: language,

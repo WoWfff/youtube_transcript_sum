@@ -17,6 +17,13 @@
                     <h1>📚 My Video History</h1>
                     <p class="subtitle">View all your summarized videos</p>
                 </div>
+                <div class="header-right">
+                    <button id="auth-btn" class="auth-btn">🔐 Login</button>
+                    <div id="user-info" class="user-info" style="display: none;">
+                        <span id="username-display"></span>
+                        <button id="logout-btn" class="logout-btn">Logout</button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -59,6 +66,103 @@
         </footer>
     </div>
 
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Login</h2>
+                <button class="modal-close" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" data-auth-tab="login">Login</button>
+                    <button class="auth-tab-btn" data-auth-tab="register">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form active">
+                    <div class="input-group">
+                        <label for="login-username">Username</label>
+                        <input 
+                            type="text" 
+                            id="login-username" 
+                            name="username" 
+                            placeholder="Enter your username"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Password</label>
+                        <input 
+                            type="password" 
+                            id="login-password" 
+                            name="password" 
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="login-btn">
+                        <span class="btn-text">Login</span>
+                        <span class="btn-loader" style="display: none;">
+                            <span class="spinner"></span> Logging in...
+                        </span>
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form">
+                    <div class="input-group">
+                        <label for="register-username">Username</label>
+                        <input 
+                            type="text" 
+                            id="register-username" 
+                            name="username" 
+                            placeholder="Choose a username"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+                    <div class="input-group">
+                        <label for="register-password">Password</label>
+                        <input 
+                            type="password" 
+                            id="register-password" 
+                            name="password" 
+                            placeholder="Choose a password"
+                            required
+                            autocomplete="new-password"
+                        >
+                    </div>
+                    <div class="input-group">
+                        <label for="register-password-confirm">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="register-password-confirm" 
+                            name="password_confirm" 
+                            placeholder="Confirm your password"
+                            required
+                            autocomplete="new-password"
+                        >
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="register-btn">
+                        <span class="btn-text">Register</span>
+                        <span class="btn-loader" style="display: none;">
+                            <span class="spinner"></span> Registering...
+                        </span>
+                    </button>
+                </form>
+
+                <div id="auth-error" class="error-box" style="display: none;">
+                    <span class="error-icon">⚠️</span>
+                    <span id="auth-error-text"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/auth.js"></script>
     <script src="/static/history.js"></script>
 </body>
 </html>

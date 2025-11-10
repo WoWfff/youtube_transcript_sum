@@ -16,7 +16,14 @@ class AllSummarizes:
             UserUrlsResponse model
         """
         try:
-            db_user = Select(model=UserBase, engine=self.engine).by_filter(cookies=user_id)
+            # Try to get user by ID first (for JWT auth), then by cookies (for backward compatibility)
+            try:
+                user_id_int = int(user_id)
+                db_user = Select(model=UserBase, engine=self.engine).by_filter(id=user_id_int)
+            except (ValueError, TypeError):
+                # Fallback to cookies for backward compatibility
+                db_user = Select(model=UserBase, engine=self.engine).by_filter(cookies=user_id)
+            
             if not db_user:
                 raise HTTPException(status_code=404, detail="User not found")
 
@@ -44,14 +51,23 @@ class AllSummarizes:
                     transcipt=text
                 )
 
-            return SummarizesResponse(cookies_user_id=user_id, user_urls=data)
+            # Use user ID or username for response
+            user_identifier = str(db_user.id) if db_user.username else user_id
+            return SummarizesResponse(cookies_user_id=user_identifier, user_urls=data)
 
         except Exception as err:
             raise HTTPException(status_code=500, detail="Internal server error") from err
 
     def clear_user_sums(self, user_id: str) -> bool:
         try:
-            db_user = Select(model=UserBase, engine=self.engine).by_filter(cookies=user_id)
+            # Try to get user by ID first (for JWT auth), then by cookies (for backward compatibility)
+            try:
+                user_id_int = int(user_id)
+                db_user = Select(model=UserBase, engine=self.engine).by_filter(id=user_id_int)
+            except (ValueError, TypeError):
+                # Fallback to cookies for backward compatibility
+                db_user = Select(model=UserBase, engine=self.engine).by_filter(cookies=user_id)
+            
             if not db_user:
                 raise HTTPException(status_code=404, detail="User not found")
 
