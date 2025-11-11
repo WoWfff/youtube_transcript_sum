@@ -56,6 +56,11 @@ A modern web application that extracts, summarizes, and translates YouTube video
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
+   for uv
+   ```bash
+   uv venv
+   source .venv/bin/activate
+   ```
 
 3. **Install dependencies**
 
@@ -92,8 +97,13 @@ A modern web application that extracts, summarizes, and translates YouTube video
    The database tables will be created automatically on first run. Make sure your database connection settings in `.env` are correct.
 
 7. **Run the application**
+   Native Mode (Production Mode):
    ```bash
-   fastapi run run.py or fastapi dev run.py
+   fastapi run run.py
+   ```
+   Dev Mode (Development Mode):
+   ```bash
+   fastapi dev run.py
    ```
 
 8. **Access the application**
