@@ -58,6 +58,7 @@ A modern web application that extracts, summarizes, and translates YouTube video
    ```
 
 3. **Install dependencies**
+
    for pip (default)
    ```bash
    pip install -r requirements.txt
