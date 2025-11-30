@@ -20,8 +20,6 @@ A modern web application that extracts, summarizes, and translates YouTube video
 
 ## 📸 Screenshots
 
-## 📸 Screenshots
-
 <table>
   <tr>
     <td width="33%"><img src="screenshots/main-page.png" width="100%"/></td>
